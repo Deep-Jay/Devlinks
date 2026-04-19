@@ -1,12 +1,14 @@
 import { useState } from "react";
+import { useLinks } from "../context/LinksContext";
 
-function AddLinkForm({ onAdd, checkDuplicateURL }) {
+function AddLinkForm() {
   const [formState, setFormState] = useState({
     title: "",
     url: "",
     icon: "",
   });
   const [errors, setErrors] = useState({});
+  const { handleAdd, checkDuplicateURL } = useLinks();
 
   const handleFormStateChange = (field) => {
     setFormState((prev) => ({
@@ -43,7 +45,7 @@ function AddLinkForm({ onAdd, checkDuplicateURL }) {
       return;
     }
 
-    onAdd(formState);
+    handleAdd(formState);
     setFormState({
       title: "",
       url: "",

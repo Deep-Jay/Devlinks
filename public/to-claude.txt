@@ -1,7 +1,235 @@
 App.jsx
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { AddLinkForm, LinkCard, ProfileHeader, Skeleton } from "./components";
 import EmptyState from "./components/EmptyState";
+import { useLinks } from "./context/LinksContext";
+
+export default function App() {
+  const { links, isLoading, setIsLoading } = useLinks();
+
+  useEffect(() => {
+    console.log("Devlinks Mounted");
+    const fakeloading = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+
+    return () => {
+      clearTimeout(fakeloading);
+    };
+  }, [setIsLoading]);
+
+  if (isLoading) {
+    return (
+      <div className="container">
+        <Skeleton type="header" />
+        <div className="link-grid">
+          <Skeleton type="card" />
+          <Skeleton type="card" />
+          <Skeleton type="card" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container">
+      <ProfileHeader
+        name="Jaydeep"
+        bio="Blanditiis ratione quibusdam iusto sit nostrum eos commodi et. Est fugiat aut sint ut aut."
+        avatar="https://avatars.githubusercontent.com/u/83915597?v=4&size=64"
+      />
+      {links.length === 0 ? (
+        <EmptyState
+          icon="🪑"
+          title="No links added"
+          message={
+            <a className="btn" href="#form">
+              Add your first link below ↴
+            </a>
+          }
+        />
+      ) : (
+        <div className="link-grid">
+          {links.map((link, index) => (
+            <LinkCard
+              key={link.id}
+              id={link.id}
+              url={link.url}
+              icon={link.icon}
+              title={link.title}
+              visible={link.visible}
+              first={index === 0}
+              last={index === links.length - 1}
+            />
+          ))}
+        </div>
+      )}
+      <AddLinkForm />
+    </div>
+  );
+}
+
+LinkCard.jsx
+import { useEffect, useState } from "react";
+import EditMode from "./EditMode";
+import { useLinks } from "../context/LinksContext";
+
+function LinkedCard({ id, title, url, icon, visible, first, last }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(title);
+  const [isEditingLink, setIsEditingLink] = useState(false);
+  const [draftLink, setDraftLink] = useState(url);
+  const { handleDelete, handleToggle, moveUp, moveDown, handleUpdate } =
+    useLinks();
+
+  const handleSave = (field, value, setEditing) => {
+    if (!value.trim()) return;
+    handleUpdate(id, { [field]: value });
+    setEditing(false);
+  };
+
+  const handleCancel = () => {
+    setDraft(title); // reset draft to original
+    setIsEditing(false);
+  };
+
+  const handleCancelLink = () => {
+    setDraftLink(url); // reset draft to original
+    setIsEditingLink(false);
+  };
+
+  // Save on Enter, cancel on Escape
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") handleSave("title", draft, setIsEditing);
+    if (e.key === "Escape") handleCancel();
+  };
+
+  const handleKeyDownLink = (e) => {
+    if (e.key === "Enter") handleSave("url", draftLink, setIsEditingLink);
+    if (e.key === "Escape") handleCancelLink();
+  };
+  useEffect(() => {
+    setDraft(title);
+  }, [title]);
+  useEffect(() => {
+    setDraftLink(url);
+  }, [url]);
+
+  if (!id || !title) {
+    console.warn("Id or Title are missing");
+    return null;
+  }
+
+  return (
+    <div className="link-card">
+      <div className="info">
+        {visible ? (
+          <a href={url} target="_blank" className="icon">
+            {icon}
+          </a>
+        ) : (
+          <span className="icon">{icon}</span>
+        )}
+        <div className="title">
+          {isEditing ? (
+            <EditMode
+              value={draft}
+              setValue={setDraft}
+              handleKeyDown={handleKeyDown}
+              handleSave={() => handleSave("title", draft, setIsEditing)}
+              handleCancel={handleCancel}
+            />
+          ) : (
+            <p onDoubleClick={() => setIsEditing(true)}>{title}</p>
+          )}
+        </div>
+        {visible && (
+          <div className="url">
+            {isEditingLink ? (
+              <EditMode
+                value={draftLink}
+                setValue={setDraftLink}
+                handleKeyDown={handleKeyDownLink}
+                handleSave={() =>
+                  handleSave("url", draftLink, setIsEditingLink)
+                }
+                handleCancel={handleCancelLink}
+              />
+            ) : (
+              <p onDoubleClick={() => setIsEditingLink(true)}>{url}</p>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="actions">
+        <button onClick={() => handleDelete(id)}>Delete</button>
+        <button onClick={() => handleToggle(id)}>Toggle</button>
+        {!first && <button onClick={() => moveUp(id)}>⬆️</button>}
+        {!last && <button onClick={() => moveDown(id)}>⬇️</button>}
+      </div>
+    </div>
+  );
+}
+
+export default LinkCard;
+
+ProfileHeader.jsx
+import { useTheme } from "../context/ThemeContext";
+
+export default function ProfileHeader({ name, bio, avatar }) {
+  const { setTheme } = useTheme();
+  const toggleTheme = () => {
+    setTheme((prev) => {
+      return prev === "light" ? "dark" : "light";
+    });
+  };
+  return (
+    <div className="portfolio-header">
+      <img src={avatar} />
+      <h4>{name}</h4>
+      <p>{bio}</p>
+      <button class="sw-toggle" onClick={toggleTheme}>
+        <svg
+          class="sw-toggle-icon sw-ico-moon"
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        <span class="sw-track">
+          <span class="sw-thumb"></span>
+        </span>
+        <svg
+          class="sw-toggle-icon sw-ico-sun"
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="4"
+            fill="currentColor"
+            stroke="none"
+          ></circle>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+LinksContext.jsx
+import { useEffect } from "react";
+import { useContext } from "react";
+import { useState } from "react";
+import { createContext } from "react";
 const demoLinks = [
   {
     id: 1,
@@ -25,28 +253,20 @@ const demoLinks = [
     visible: true,
   },
 ];
-export default function App() {
+
+export const LinksContext = createContext(null);
+
+export function LinksProvider({ children }) {
   const [links, setLinks] = useState(() => {
     try {
       const savedLinks = localStorage.getItem("links");
-      if (savedLinks !== null) return JSON.parse(savedLinks); // key exists — trust it
+      if (savedLinks !== null) return JSON.parse(savedLinks);
       return demoLinks;
     } catch {
       return [];
     }
   });
   const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    console.log("Devlinks Mounted");
-    const fakeloading = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-
-    return () => {
-      clearTimeout(fakeloading);
-    };
-  }, []);
 
   useEffect(() => {
     localStorage.setItem("links", JSON.stringify(links));
@@ -114,290 +334,73 @@ export default function App() {
     );
   };
 
-  if (isLoading) {
-    return (
-      <div className="container">
-        <Skeleton type="header" />
-        <div className="link-grid">
-          <Skeleton type="card" />
-          <Skeleton type="card" />
-          <Skeleton type="card" />
-        </div>
-      </div>
-    );
-  }
+  const value = {
+    links,
+    setLinks,
+    isLoading,
+    setIsLoading,
+    handleDelete,
+    handleAdd,
+    handleToggle,
+    handleUpdate,
+    moveDown,
+    moveUp,
+    checkDuplicateURL,
+  };
 
   return (
-    <div className="container">
-      <ProfileHeader
-        name="Jaydeep"
-        bio="Blanditiis ratione quibusdam iusto sit nostrum eos commodi et. Est fugiat aut sint ut aut."
-        avatar="https://avatars.githubusercontent.com/u/83915597?v=4&size=64"
-      />
-      {links.length === 0 ? (
-        <EmptyState
-          icon="🪑"
-          title="No links added"
-          message={
-            <a className="btn" href="#form">
-              Add your first link below ↴
-            </a>
-          }
-        />
-      ) : (
-        <div className="link-grid">
-          {links.map((link, index) => (
-            <LinkCard
-              key={link.id}
-              id={link.id}
-              url={link.url}
-              icon={link.icon}
-              title={link.title}
-              visible={link.visible}
-              onDelete={() => handleDelete(link.id)}
-              onToggle={() => handleToggle(link.id)}
-              onMoveUp={() => moveUp(link.id)}
-              onMoveDown={() => moveDown(link.id)}
-              first={index === 0}
-              last={index === links.length - 1}
-              onUpdate={handleUpdate}
-            />
-          ))}
-        </div>
-      )}
-      <AddLinkForm onAdd={handleAdd} checkDuplicateURL={checkDuplicateURL} />
-    </div>
+    <LinksContext.Provider value={value}>{children}</LinksContext.Provider>
   );
 }
 
-Skeleton.jsx
-const Skeleton = ({ type }) => {
-  if (type === "header") {
-    return (
-      <div className="skeleton-wrapper header-center">
-        <div className="skeleton-avatar shimmery" />
-        <div
-          className="skeleton-line title shimmery"
-          style={{ width: "150px" }}
-        />
-        <div className="skeleton-line bio shimmery" style={{ width: "80%" }} />
-        <div className="skeleton-line bio shimmery" style={{ width: "60%" }} />
-      </div>
-    );
+export function useLinks() {
+  const context = useContext(LinksContext);
+
+  if (!context) {
+    throw new Error("useLinks must be used inside LinksProvider");
   }
 
-  return (
-    <div className="skeleton-wrapper card-layout">
-      <div className="skeleton-icon-box shimmery" />
-      <div className="skeleton-info">
-        <div
-          className="skeleton-line shimmery"
-          style={{ width: "100px", height: "18px" }}
-        />
-        <div
-          className="skeleton-line shimmery"
-          style={{ width: "160px", height: "12px" }}
-        />
-      </div>
-      <div className="skeleton-actions">
-        <div className="skeleton-btn shimmery" />
-        <div className="skeleton-btn shimmery" />
-        <div className="skeleton-square shimmery" />
-      </div>
-    </div>
-  );
-};
+  return context;
+}
 
-export default Skeleton;
-
-LinkCard.jsx
-import { useEffect } from "react";
+ThemeContext.jsx
+import { useContext, useEffect } from "react";
 import { useState } from "react";
+import { createContext } from "react";
 
-function LinkedCard({
-  id,
-  title,
-  url,
-  icon,
-  visible,
-  onDelete,
-  onToggle,
-  onMoveUp,
-  onMoveDown,
-  first,
-  last,
-  onUpdate,
-}) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [draft, setDraft] = useState(title);
-  const [isEditingLink, setIsEditingLink] = useState(false);
-  const [draftLink, setDraftLink] = useState(url);
+export const ThemeContext = createContext(null);
 
-  const handleSave = (field, value, setEditing) => {
-    if (!value.trim()) return;
-    onUpdate(id, { [field]: value });
-    setEditing(false);
-  };
+export function ThemeProvider({ children }) {
+  const [theme, setTheme] = useState(() => {
+    try {
+      const savedTheme = localStorage.getItem("theme");
+      if (savedTheme !== null) return JSON.parse(savedTheme);
+      return "light";
+    } catch {
+      return "light";
+    }
+  });
 
-  const handleCancel = () => {
-    setDraft(title); // reset draft to original
-    setIsEditing(false);
-  };
-
-  const handleCancelLink = () => {
-    setDraftLink(url); // reset draft to original
-    setIsEditingLink(false);
-  };
-
-  // Save on Enter, cancel on Escape
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") handleSave("title", draft, setIsEditing);
-    if (e.key === "Escape") handleCancel();
-  };
-
-  const handleKeyDownLink = (e) => {
-    if (e.key === "Enter") handleSave("url", draftLink, setIsEditingLink);
-    if (e.key === "Escape") handleCancelLink();
-  };
   useEffect(() => {
-    setDraft(title);
-  }, [title]);
-  useEffect(() => {
-    setDraftLink(url);
-  }, [url]);
+    localStorage.setItem("theme", JSON.stringify(theme));
+    document.documentElement.setAttribute("theme", theme);
+  }, [theme]);
 
-  const EditMode = ({
-    value,
-    setValue,
-    handleKeyDown,
-    handleSave,
-    handleCancel,
-  }) => {
-    return (
-      <div role="group" className="edit-mode">
-        <div className="button-group">
-          <button onClick={handleSave}>✔️</button>
-          <button onClick={handleCancel}>❌</button>
-        </div>
-        <input
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          autoFocus // focus input immediately on edit
-        />
-      </div>
-    );
+  const value = {
+    theme,
+    setTheme,
   };
-
-  const DefaultCard = ({
-    title,
-    url,
-    onDelete,
-    onToggle,
-    onMoveUp,
-    onMoveDown,
-  }) => {
-    return (
-      <div className="link-card">
-        <div className="info">
-          <a href={url} target="_blank" className="icon">
-            {icon}
-          </a>
-          <div className="title">
-            {isEditing ? (
-              <EditMode
-                value={draft}
-                setValue={setDraft}
-                handleKeyDown={handleKeyDown}
-                handleSave={() => handleSave("title", draft, setIsEditing)}
-                handleCancel={handleCancel}
-              />
-            ) : (
-              <p onDoubleClick={() => setIsEditing(true)}>{title}</p>
-            )}
-          </div>
-          <div className="url">
-            {isEditingLink ? (
-              <EditMode
-                value={draftLink}
-                setValue={setDraftLink}
-                handleKeyDown={handleKeyDownLink}
-                handleSave={() =>
-                  handleSave("url", draftLink, setIsEditingLink)
-                }
-                handleCancel={handleCancelLink}
-              />
-            ) : (
-              <p onDoubleClick={() => setIsEditingLink(true)}>{url}</p>
-            )}
-          </div>
-        </div>
-        <div className="actions">
-          <button onClick={onDelete}>Delete</button>
-          <button onClick={onToggle}>Toggle</button>
-          {!first && <button onClick={onMoveUp}>⬆️</button>}
-          {!last && <button onClick={onMoveDown}>⬇️</button>}
-        </div>
-      </div>
-    );
-  };
-
-  const HiddenCard = ({ title, onDelete, onToggle, onMoveUp, onMoveDown }) => {
-    return (
-      <div className="link-card">
-        <div className="info">
-          <span className="icon">{icon}</span>
-          {isEditing ? (
-            <EditMode
-              value={draft}
-              setValue={setDraft}
-              handleKeyDown={handleKeyDown}
-              handleSave={() => handleSave("title", draft, setIsEditing)}
-              handleCancel={handleCancel}
-            />
-          ) : (
-            <p className="title" onDoubleClick={() => setIsEditing(true)}>
-              {title}
-            </p>
-          )}
-        </div>
-        <div className="actions">
-          <button onClick={onDelete}>Delete</button>
-          <button onClick={onToggle}>Toggle</button>
-          {!first && <button onClick={onMoveUp}>⬆️</button>}
-          {!last && <button onClick={onMoveDown}>⬇️</button>}
-        </div>
-      </div>
-    );
-  };
-
-  if (!id || !title) {
-    console.warn("Id or Title are missing");
-    return null;
-  }
-
-  if (!visible) {
-    return (
-      <HiddenCard
-        title={title}
-        onDelete={onDelete}
-        onToggle={onToggle}
-        onMoveDown={onMoveDown}
-        onMoveUp={onMoveUp}
-      />
-    );
-  }
 
   return (
-    <DefaultCard
-      title={title}
-      url={url}
-      onDelete={onDelete}
-      onToggle={onToggle}
-      onMoveDown={onMoveDown}
-      onMoveUp={onMoveUp}
-    />
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
 }
 
-export default LinkCard;
+export function useTheme() {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error("useTheme must be used inside ThemeProvider");
+  }
+
+  return context;
+}

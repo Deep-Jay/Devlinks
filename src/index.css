@@ -1,15 +1,68 @@
 /*GEMINI*/
-/* 1. Base Reset & Modern Font */
+/* 1. Theme Variables & Base Reset */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
 
 :root {
+    /* --- LIGHT THEME (Default) --- */
+    --bg-color: #f1f5f9;
+    --bg-gradient-1: #e2e8f0;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --card-bg: rgba(255, 255, 255, 0.8);
+    --card-border: rgba(15, 23, 42, 0.1);
+    --input-bg: rgba(255, 255, 255, 0.9);
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+
+    /* Skeleton Colors (Light) */
+    --skeleton-base: #e2e8f0;
+    --skeleton-shimmer: #f8fafc;
+}
+
+/* --- DARK THEME SWITCH --- */
+html[theme="dark"] {
     --bg-color: #0f172a;
+    --bg-gradient-1: #1e293b;
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
     --card-bg: rgba(30, 41, 59, 0.6);
     --card-border: rgba(255, 255, 255, 0.1);
-    --accent: #3b82f6;
-    --accent-hover: #2563eb;
+    --input-bg: rgba(0, 0, 0, 0.2);
+
+    /* Skeleton Colors (Dark) */
+    --skeleton-base: #27303f;
+    --skeleton-shimmer: #354254;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Inter", system-ui, sans-serif;
+    background-color: var(--bg-color);
+    background-image:
+        radial-gradient(
+            circle at top right,
+            var(--bg-gradient-1) 0%,
+            transparent 40%
+        ),
+        radial-gradient(
+            circle at bottom left,
+            var(--bg-gradient-1) 0%,
+            transparent 40%
+        );
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 3rem 1rem;
+    line-height: 1.5;
+    transition:
+        background-color 0.3s ease,
+        color 0.3s ease; /* Smooth switch */
 }
 
 * {
@@ -49,6 +102,7 @@ a {
 /* 3. Portfolio Header */
 .portfolio-header {
     text-align: center;
+    position: relative;
 }
 
 .portfolio-header img {
@@ -102,7 +156,7 @@ a {
 .link-card:has(a):hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-    background: rgba(40, 53, 72, 0.7);
+    /*background: rgba(40, 53, 72, 0.7);*/
 }
 
 /* 5. Info Section (Grid magic for zero layout shift) */
@@ -400,14 +454,14 @@ input:has(+ .error) {
     align-items: center;
     gap: 16px;
     padding: 16px;
-    background: #1c2431; /* Matches your image card color */
+    background: var(--skeleton-base); /* Matches your image card color */
     border: 1px solid #27303f;
     border-radius: 12px;
 }
 
 /* Base Shimmer Animation */
 .shimmery {
-    background: #27303f;
+    background: var(--skeleton-shimmer);
     background-image: linear-gradient(
         90deg,
         #27303f 0px,
@@ -467,4 +521,68 @@ input:has(+ .error) {
     width: 32px;
     height: 32px;
     border-radius: 6px;
+}
+
+.sw-toggle {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 99px;
+    color: var(--text-main);
+    transition: background 0.2s;
+    position: absolute;
+    top: 0;
+    right: 5px;
+}
+
+.sw-toggle:hover {
+    background: rgba(128, 128, 128, 0.1);
+}
+
+.sw-track {
+    width: 44px;
+    height: 24px;
+    border-radius: 12px;
+    background: var(--accent);
+    position: relative;
+    flex-shrink: 0;
+    transition: background 0.3s;
+}
+
+html[theme="light"] .sw-track {
+    background: #cbd5e1;
+}
+
+.sw-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+html[theme="light"] .sw-thumb {
+    transform: translateX(20px);
+}
+
+.sw-toggle-icon {
+    opacity: 0.4;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
+}
+
+html:not([theme="light"]) .sw-ico-moon {
+    opacity: 1;
+}
+
+html[theme="light"] .sw-ico-sun {
+    opacity: 1;
 }

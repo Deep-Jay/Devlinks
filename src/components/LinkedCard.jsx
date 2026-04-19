@@ -1,28 +1,18 @@
 import { useEffect, useState } from "react";
 import EditMode from "./EditMode";
+import { useLinks } from "../context/LinksContext";
 
-function LinkedCard({
-  id,
-  title,
-  url,
-  icon,
-  visible,
-  onDelete,
-  onToggle,
-  onMoveUp,
-  onMoveDown,
-  first,
-  last,
-  onUpdate,
-}) {
+function LinkedCard({ id, title, url, icon, visible, first, last }) {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(title);
   const [isEditingLink, setIsEditingLink] = useState(false);
   const [draftLink, setDraftLink] = useState(url);
+  const { handleDelete, handleToggle, moveUp, moveDown, handleUpdate } =
+    useLinks();
 
   const handleSave = (field, value, setEditing) => {
     if (!value.trim()) return;
-    onUpdate(id, { [field]: value });
+    handleUpdate(id, { [field]: value });
     setEditing(false);
   };
 
@@ -100,10 +90,10 @@ function LinkedCard({
         )}
       </div>
       <div className="actions">
-        <button onClick={onDelete}>Delete</button>
-        <button onClick={onToggle}>Toggle</button>
-        {!first && <button onClick={onMoveUp}>⬆️</button>}
-        {!last && <button onClick={onMoveDown}>⬇️</button>}
+        <button onClick={() => handleDelete(id)}>Delete</button>
+        <button onClick={() => handleToggle(id)}>Toggle</button>
+        {!first && <button onClick={() => moveUp(id)}>⬆️</button>}
+        {!last && <button onClick={() => moveDown(id)}>⬇️</button>}
       </div>
     </div>
   );
