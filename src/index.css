@@ -1,0 +1,470 @@
+/*GEMINI*/
+/* 1. Base Reset & Modern Font */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
+
+:root {
+    --bg-color: #0f172a;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --card-bg: rgba(30, 41, 59, 0.6);
+    --card-border: rgba(255, 255, 255, 0.1);
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Inter", system-ui, sans-serif;
+    background-color: var(--bg-color);
+    background-image:
+        radial-gradient(circle at top right, #1e293b 0%, transparent 40%),
+        radial-gradient(circle at bottom left, #1e293b 0%, transparent 40%);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 3rem 1rem;
+    line-height: 1.5;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* 2. Main Layout */
+.container {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
+/* 3. Portfolio Header */
+.portfolio-header {
+    text-align: center;
+}
+
+.portfolio-header img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--card-border);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    margin-bottom: 1rem;
+}
+
+.portfolio-header h4 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.portfolio-header p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    max-width: 85%;
+    margin: 0 auto;
+}
+
+/* 4. Link Grid & Cards */
+.link-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.link-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 84px; /* Eliminates layout shift when toggling URLs */
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        opacity 0.3s ease;
+}
+
+.link-card:has(a):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    background: rgba(40, 53, 72, 0.7);
+}
+
+/* 5. Info Section (Grid magic for zero layout shift) */
+.info {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: 1.25rem;
+    flex: 1;
+    overflow: hidden;
+}
+
+.info .icon {
+    grid-row: span 2; /* Forces icon to span both title and URL rows */
+    font-size: 1.5rem;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+}
+
+.info .title {
+    font-weight: 500;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    align-self: flex-end;
+}
+
+.info .url {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    align-self: flex-start;
+    margin-top: 0.15rem;
+}
+
+.link-card:not(:has(a)) .info {
+    .icon {
+        grid-row: span 1;
+    }
+    .title {
+        align-self: center;
+    }
+}
+
+/* 6. Card Actions (Buttons) */
+.actions {
+    display: flex;
+    gap: 0.4rem;
+    margin-left: 1rem;
+}
+
+.actions button {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--card-border);
+    color: var(--text-main);
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.actions button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* 7. Add Link Form */
+form {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 1.5rem;
+    border-radius: 16px;
+    border: 1px solid var(--card-border);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+form input {
+    font-family: inherit;
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border-radius: 10px;
+    border: 1px solid var(--card-border);
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--text-main);
+    outline: none;
+    font-size: 0.95rem;
+    transition:
+        border-color 0.2s,
+        background 0.2s;
+}
+
+form input::placeholder {
+    color: var(--text-muted);
+}
+
+form input:focus {
+    border-color: var(--accent);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+form button[type="submit"] {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 0.875rem;
+    font-weight: 600;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition:
+        background 0.2s,
+        transform 0.1s;
+}
+
+form button[type="submit"]:hover {
+    background: var(--accent-hover);
+}
+
+form button[type="submit"]:active {
+    transform: scale(0.98);
+}
+
+/* 1. Edit Mode Container - Vertical Stack */
+.edit-mode {
+    display: flex;
+    flex-direction: column; /* Buttons on top, input on bottom */
+    gap: 8px;
+    flex: 1;
+    width: 100%;
+    animation: slideIn 0.2s ease-out;
+    position: relative;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* 2. Button Row (Above the Input) */
+.edit-mode .button-group {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end; /* Aligns buttons to the right */
+    position: absolute;
+    right: 8px;
+    top: 0;
+    bottom: 0;
+}
+
+/* 3. Full-Width Input */
+.edit-mode input {
+    width: 100%; /* Forces full width of the available space */
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--accent);
+    color: white;
+    padding: 5px 50px 5px 8px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.edit-mode input:focus {
+    border-color: #60a5fa; /* Lighter blue on focus */
+    background: rgba(0, 0, 0, 0.5);
+}
+
+/* 4. Styled Edit Buttons */
+.edit-mode .button-group button {
+    padding: 0px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    background: transparent;
+    border: none;
+    filter: brightness(0) saturate(0) invert(1);
+}
+
+.edit-mode button:hover {
+    filter: brightness(1.2);
+}
+
+/* 5. Logic for the Info Grid */
+.info .edit-mode {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+}
+
+.no-links {
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    a.btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--card-border);
+        color: var(--text-main);
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-family: inherit;
+        transition: all 0.2s;
+        margin-left: 20px;
+        &:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+    }
+}
+
+/* Input error state - Red border if you want to highlight the field */
+input:has(+ .error) {
+    border: 1.5px solid #ff4d4f;
+    outline: none;
+}
+
+/* Error Message Styling */
+.error {
+    color: #ff4d4f;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-top: -8px; /* Pull it closer to the input */
+    display: block;
+
+    /* Animation Trigger */
+    animation: slideInShake 0.4s ease-out forwards;
+}
+
+/* Keyframes for a smooth entrance + subtle shake */
+@keyframes slideInShake {
+    0% {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    20% {
+        transform: translateX(-4px);
+    }
+    40% {
+        transform: translateX(4px);
+    }
+    60% {
+        transform: translateX(-2px);
+    }
+    80% {
+        transform: translateX(2px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Container Layouts */
+.skeleton-wrapper {
+    margin-bottom: 20px;
+}
+
+.header-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 40px;
+}
+
+.card-layout {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: #1c2431; /* Matches your image card color */
+    border: 1px solid #27303f;
+    border-radius: 12px;
+}
+
+/* Base Shimmer Animation */
+.shimmery {
+    background: #27303f;
+    background-image: linear-gradient(
+        90deg,
+        #27303f 0px,
+        #354254 40px,
+        #27303f 80px
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -150% 0;
+    }
+    100% {
+        background-position: 150% 0;
+    }
+}
+
+/* Skeleton Shapes */
+.skeleton-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+}
+
+.skeleton-line {
+    height: 14px;
+    border-radius: 4px;
+}
+
+.skeleton-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+}
+
+.skeleton-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skeleton-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.skeleton-btn {
+    width: 60px;
+    height: 32px;
+    border-radius: 6px;
+}
+
+.skeleton-square {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+}

@@ -1,0 +1,403 @@
+App.jsx
+import { useEffect, useState } from "react";
+import { AddLinkForm, LinkCard, ProfileHeader, Skeleton } from "./components";
+import EmptyState from "./components/EmptyState";
+const demoLinks = [
+  {
+    id: 1,
+    title: "GitHub",
+    url: "https://github.com",
+    icon: "🐙",
+    visible: true,
+  },
+  {
+    id: 2,
+    title: "LinkedIn",
+    url: "https://linkedin.com",
+    icon: "💼",
+    visible: true,
+  },
+  {
+    id: 3,
+    title: "Twitter",
+    url: "https://twitter.com",
+    icon: "🐦",
+    visible: true,
+  },
+];
+export default function App() {
+  const [links, setLinks] = useState(() => {
+    try {
+      const savedLinks = localStorage.getItem("links");
+      if (savedLinks !== null) return JSON.parse(savedLinks); // key exists — trust it
+      return demoLinks;
+    } catch {
+      return [];
+    }
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    console.log("Devlinks Mounted");
+    const fakeloading = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+
+    return () => {
+      clearTimeout(fakeloading);
+    };
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("links", JSON.stringify(links));
+    document.title = `DevLinks (${links.length})`;
+  }, [links]);
+
+  const handleDelete = (id) => {
+    setLinks((prev) => prev.filter((link) => link.id !== id));
+  };
+
+  const handleToggle = (id) => {
+    setLinks((prev) =>
+      prev.map((link) =>
+        link.id === id ? { ...link, visible: !link.visible } : link,
+      ),
+    );
+  };
+
+  const handleAdd = (fields) => {
+    const data = {
+      ...fields,
+      icon: fields.icon || "🔗",
+      visible: true,
+    };
+    setLinks((prev) => [...prev, { id: Date.now(), ...data }]);
+  };
+
+  const checkDuplicateURL = (url) => {
+    return links.find((link) => link.url === url);
+  };
+
+  // Move item up
+  const moveUp = (id) => {
+    setLinks((prev) => {
+      const index = prev.findIndex((link) => link.id === id);
+      if (index === 0) return prev; // already first — do nothing
+
+      const updated = [...prev]; // copy array
+      [updated[index - 1], updated[index]] = [
+        updated[index],
+        updated[index - 1],
+      ]; // swap
+      return updated;
+    });
+  };
+
+  // Move item down in array
+  const moveDown = (id) => {
+    setLinks((prev) => {
+      const index = prev.findIndex((link) => link.id === id);
+      if (index === prev.length - 1) return prev; // already last
+
+      const updated = [...prev];
+      [updated[index + 1], updated[index]] = [
+        updated[index],
+        updated[index + 1],
+      ];
+      return updated;
+    });
+  };
+
+  const handleUpdate = (id, fields) => {
+    setLinks((prev) =>
+      prev.map((link) => (link.id === id ? { ...link, ...fields } : link)),
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container">
+        <Skeleton type="header" />
+        <div className="link-grid">
+          <Skeleton type="card" />
+          <Skeleton type="card" />
+          <Skeleton type="card" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container">
+      <ProfileHeader
+        name="Jaydeep"
+        bio="Blanditiis ratione quibusdam iusto sit nostrum eos commodi et. Est fugiat aut sint ut aut."
+        avatar="https://avatars.githubusercontent.com/u/83915597?v=4&size=64"
+      />
+      {links.length === 0 ? (
+        <EmptyState
+          icon="🪑"
+          title="No links added"
+          message={
+            <a className="btn" href="#form">
+              Add your first link below ↴
+            </a>
+          }
+        />
+      ) : (
+        <div className="link-grid">
+          {links.map((link, index) => (
+            <LinkCard
+              key={link.id}
+              id={link.id}
+              url={link.url}
+              icon={link.icon}
+              title={link.title}
+              visible={link.visible}
+              onDelete={() => handleDelete(link.id)}
+              onToggle={() => handleToggle(link.id)}
+              onMoveUp={() => moveUp(link.id)}
+              onMoveDown={() => moveDown(link.id)}
+              first={index === 0}
+              last={index === links.length - 1}
+              onUpdate={handleUpdate}
+            />
+          ))}
+        </div>
+      )}
+      <AddLinkForm onAdd={handleAdd} checkDuplicateURL={checkDuplicateURL} />
+    </div>
+  );
+}
+
+Skeleton.jsx
+const Skeleton = ({ type }) => {
+  if (type === "header") {
+    return (
+      <div className="skeleton-wrapper header-center">
+        <div className="skeleton-avatar shimmery" />
+        <div
+          className="skeleton-line title shimmery"
+          style={{ width: "150px" }}
+        />
+        <div className="skeleton-line bio shimmery" style={{ width: "80%" }} />
+        <div className="skeleton-line bio shimmery" style={{ width: "60%" }} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="skeleton-wrapper card-layout">
+      <div className="skeleton-icon-box shimmery" />
+      <div className="skeleton-info">
+        <div
+          className="skeleton-line shimmery"
+          style={{ width: "100px", height: "18px" }}
+        />
+        <div
+          className="skeleton-line shimmery"
+          style={{ width: "160px", height: "12px" }}
+        />
+      </div>
+      <div className="skeleton-actions">
+        <div className="skeleton-btn shimmery" />
+        <div className="skeleton-btn shimmery" />
+        <div className="skeleton-square shimmery" />
+      </div>
+    </div>
+  );
+};
+
+export default Skeleton;
+
+LinkCard.jsx
+import { useEffect } from "react";
+import { useState } from "react";
+
+function LinkedCard({
+  id,
+  title,
+  url,
+  icon,
+  visible,
+  onDelete,
+  onToggle,
+  onMoveUp,
+  onMoveDown,
+  first,
+  last,
+  onUpdate,
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(title);
+  const [isEditingLink, setIsEditingLink] = useState(false);
+  const [draftLink, setDraftLink] = useState(url);
+
+  const handleSave = (field, value, setEditing) => {
+    if (!value.trim()) return;
+    onUpdate(id, { [field]: value });
+    setEditing(false);
+  };
+
+  const handleCancel = () => {
+    setDraft(title); // reset draft to original
+    setIsEditing(false);
+  };
+
+  const handleCancelLink = () => {
+    setDraftLink(url); // reset draft to original
+    setIsEditingLink(false);
+  };
+
+  // Save on Enter, cancel on Escape
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") handleSave("title", draft, setIsEditing);
+    if (e.key === "Escape") handleCancel();
+  };
+
+  const handleKeyDownLink = (e) => {
+    if (e.key === "Enter") handleSave("url", draftLink, setIsEditingLink);
+    if (e.key === "Escape") handleCancelLink();
+  };
+  useEffect(() => {
+    setDraft(title);
+  }, [title]);
+  useEffect(() => {
+    setDraftLink(url);
+  }, [url]);
+
+  const EditMode = ({
+    value,
+    setValue,
+    handleKeyDown,
+    handleSave,
+    handleCancel,
+  }) => {
+    return (
+      <div role="group" className="edit-mode">
+        <div className="button-group">
+          <button onClick={handleSave}>✔️</button>
+          <button onClick={handleCancel}>❌</button>
+        </div>
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          autoFocus // focus input immediately on edit
+        />
+      </div>
+    );
+  };
+
+  const DefaultCard = ({
+    title,
+    url,
+    onDelete,
+    onToggle,
+    onMoveUp,
+    onMoveDown,
+  }) => {
+    return (
+      <div className="link-card">
+        <div className="info">
+          <a href={url} target="_blank" className="icon">
+            {icon}
+          </a>
+          <div className="title">
+            {isEditing ? (
+              <EditMode
+                value={draft}
+                setValue={setDraft}
+                handleKeyDown={handleKeyDown}
+                handleSave={() => handleSave("title", draft, setIsEditing)}
+                handleCancel={handleCancel}
+              />
+            ) : (
+              <p onDoubleClick={() => setIsEditing(true)}>{title}</p>
+            )}
+          </div>
+          <div className="url">
+            {isEditingLink ? (
+              <EditMode
+                value={draftLink}
+                setValue={setDraftLink}
+                handleKeyDown={handleKeyDownLink}
+                handleSave={() =>
+                  handleSave("url", draftLink, setIsEditingLink)
+                }
+                handleCancel={handleCancelLink}
+              />
+            ) : (
+              <p onDoubleClick={() => setIsEditingLink(true)}>{url}</p>
+            )}
+          </div>
+        </div>
+        <div className="actions">
+          <button onClick={onDelete}>Delete</button>
+          <button onClick={onToggle}>Toggle</button>
+          {!first && <button onClick={onMoveUp}>⬆️</button>}
+          {!last && <button onClick={onMoveDown}>⬇️</button>}
+        </div>
+      </div>
+    );
+  };
+
+  const HiddenCard = ({ title, onDelete, onToggle, onMoveUp, onMoveDown }) => {
+    return (
+      <div className="link-card">
+        <div className="info">
+          <span className="icon">{icon}</span>
+          {isEditing ? (
+            <EditMode
+              value={draft}
+              setValue={setDraft}
+              handleKeyDown={handleKeyDown}
+              handleSave={() => handleSave("title", draft, setIsEditing)}
+              handleCancel={handleCancel}
+            />
+          ) : (
+            <p className="title" onDoubleClick={() => setIsEditing(true)}>
+              {title}
+            </p>
+          )}
+        </div>
+        <div className="actions">
+          <button onClick={onDelete}>Delete</button>
+          <button onClick={onToggle}>Toggle</button>
+          {!first && <button onClick={onMoveUp}>⬆️</button>}
+          {!last && <button onClick={onMoveDown}>⬇️</button>}
+        </div>
+      </div>
+    );
+  };
+
+  if (!id || !title) {
+    console.warn("Id or Title are missing");
+    return null;
+  }
+
+  if (!visible) {
+    return (
+      <HiddenCard
+        title={title}
+        onDelete={onDelete}
+        onToggle={onToggle}
+        onMoveDown={onMoveDown}
+        onMoveUp={onMoveUp}
+      />
+    );
+  }
+
+  return (
+    <DefaultCard
+      title={title}
+      url={url}
+      onDelete={onDelete}
+      onToggle={onToggle}
+      onMoveDown={onMoveDown}
+      onMoveUp={onMoveUp}
+    />
+  );
+}
+
+export default LinkCard;
