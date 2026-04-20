@@ -1,4 +1,4 @@
-import { useEffect, useContext, useState, createContext } from "react";
+import { useEffect, useContext, createContext, useReducer } from "react";
 
 const demoLinks = [
   {
@@ -26,8 +26,8 @@ const demoLinks = [
 
 export const LinksContext = createContext(null);
 
-export function LinksProvider({ children }) {
-  const [links, setLinks] = useState(() => {
+const initialState = {
+  links: (() => {
     try {
       const savedLinks = localStorage.getItem("links");
       if (savedLinks !== null) return JSON.parse(savedLinks);
@@ -35,77 +35,136 @@ export function LinksProvider({ children }) {
     } catch {
       return [];
     }
-  });
+  })(),
+};
 
-  useEffect(() => {
-    localStorage.setItem("links", JSON.stringify(links));
-    document.title = `DevLinks (${links.length})`;
-  }, [links]);
+function linksReducer(state, action) {
+  switch (action.type) {
+    case "DELETE_LINK":
+      return {
+        ...state,
+        links: state.links.filter((link) => link.id !== action.payload),
+      };
 
-  const handleDelete = (id) => {
-    setLinks((prev) => prev.filter((link) => link.id !== id));
-  };
+    case "TOGGLE_LINK":
+      return {
+        ...state,
+        links: state.links.map((link) =>
+          link.id === action.payload
+            ? { ...link, visible: !link.visible }
+            : link,
+        ),
+      };
 
-  const handleToggle = (id) => {
-    setLinks((prev) =>
-      prev.map((link) =>
-        link.id === id ? { ...link, visible: !link.visible } : link,
-      ),
-    );
-  };
+    case "ADD_LINK": {
+      const data = {
+        ...action.payload,
+        icon: action.payload.icon || "🔗",
+        visible: true,
+      };
+      return {
+        ...state,
+        links: [...state.links, { id: Date.now(), ...data }],
+      };
+    }
 
-  const handleAdd = (fields) => {
-    const data = {
-      ...fields,
-      icon: fields.icon || "🔗",
-      visible: true,
-    };
-    setLinks((prev) => [...prev, { id: Date.now(), ...data }]);
-  };
+    case "MOVE_UP": {
+      const index = state.links.findIndex((link) => link.id === action.payload);
+      if (index === 0) return state;
 
-  const checkDuplicateURL = (url) => {
-    return links.find((link) => link.url === url);
-  };
-
-  // Move item up
-  const moveUp = (id) => {
-    setLinks((prev) => {
-      const index = prev.findIndex((link) => link.id === id);
-      if (index === 0) return prev; // already first — do nothing
-
-      const updated = [...prev]; // copy array
+      const updated = [...state.links]; // copy array
       [updated[index - 1], updated[index]] = [
         updated[index],
         updated[index - 1],
       ]; // swap
-      return updated;
-    });
-  };
+      return {
+        ...state,
+        links: updated,
+      };
+    }
 
-  // Move item down in array
-  const moveDown = (id) => {
-    setLinks((prev) => {
-      const index = prev.findIndex((link) => link.id === id);
-      if (index === prev.length - 1) return prev; // already last
+    case "MOVE_DOWN": {
+      const index = state.links.findIndex((link) => link.id === action.payload);
+      if (index === state.links.length - 1) return state;
 
-      const updated = [...prev];
+      const updated = [...state.links];
       [updated[index + 1], updated[index]] = [
         updated[index],
         updated[index + 1],
       ];
-      return updated;
-    });
+      return {
+        ...state,
+        links: updated,
+      };
+    }
+
+    case "UPDATE_LINK":
+      return {
+        ...state,
+        links: state.links.map((link) =>
+          link.id === action.payload.id
+            ? { ...link, ...action.payload.fields }
+            : link,
+        ),
+      };
+
+    default:
+      return state;
+  }
+}
+
+export function LinksProvider({ children }) {
+  const [state, dispatch] = useReducer(linksReducer, initialState);
+
+  useEffect(() => {
+    localStorage.setItem("links", JSON.stringify(state.links));
+    document.title = `DevLinks (${state.links.length})`;
+  }, [state.links]);
+
+  const actions = {
+    deleteLink: (id) => ({ type: "DELETE_LINK", payload: id }),
+    toggleLink: (id) => ({ type: "TOGGLE_LINK", payload: id }),
+    addLink: (link) => ({ type: "ADD_LINK", payload: link }),
+    moveUp: (id) => ({ type: "MOVE_UP", payload: id }),
+    moveDown: (id) => ({ type: "MOVE_DOWN", payload: id }),
+    updateLink: (id, fields) => ({
+      type: "UPDATE_LINK",
+      payload: { id: id, fields: fields },
+    }),
+  };
+
+  const handleDelete = (id) => {
+    dispatch(actions.deleteLink(id));
+  };
+
+  const handleToggle = (id) => {
+    dispatch(actions.toggleLink(id));
+  };
+
+  const handleAdd = (fields) => {
+    dispatch(actions.addLink(fields));
+  };
+
+  const checkDuplicateURL = (url) => {
+    return state.links.find((link) => link.url === url);
+  };
+
+  // Move item up
+  const moveUp = (id) => {
+    dispatch(actions.moveUp(id));
+  };
+
+  // Move item down in array
+  const moveDown = (id) => {
+    dispatch(actions.moveDown(id));
   };
 
   const handleUpdate = (id, fields) => {
-    setLinks((prev) =>
-      prev.map((link) => (link.id === id ? { ...link, ...fields } : link)),
-    );
+    dispatch(actions.updateLink(id, fields));
   };
 
   const value = {
-    links,
-    setLinks,
+    links: state.links,
     handleDelete,
     handleAdd,
     handleToggle,

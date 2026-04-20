@@ -1,235 +1,5 @@
-App.jsx
-import { useEffect } from "react";
-import { AddLinkForm, LinkCard, ProfileHeader, Skeleton } from "./components";
-import EmptyState from "./components/EmptyState";
-import { useLinks } from "./context/LinksContext";
+import { useEffect, useContext, createContext, useReducer } from "react";
 
-export default function App() {
-  const { links, isLoading, setIsLoading } = useLinks();
-
-  useEffect(() => {
-    console.log("Devlinks Mounted");
-    const fakeloading = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-
-    return () => {
-      clearTimeout(fakeloading);
-    };
-  }, [setIsLoading]);
-
-  if (isLoading) {
-    return (
-      <div className="container">
-        <Skeleton type="header" />
-        <div className="link-grid">
-          <Skeleton type="card" />
-          <Skeleton type="card" />
-          <Skeleton type="card" />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="container">
-      <ProfileHeader
-        name="Jaydeep"
-        bio="Blanditiis ratione quibusdam iusto sit nostrum eos commodi et. Est fugiat aut sint ut aut."
-        avatar="https://avatars.githubusercontent.com/u/83915597?v=4&size=64"
-      />
-      {links.length === 0 ? (
-        <EmptyState
-          icon="🪑"
-          title="No links added"
-          message={
-            <a className="btn" href="#form">
-              Add your first link below ↴
-            </a>
-          }
-        />
-      ) : (
-        <div className="link-grid">
-          {links.map((link, index) => (
-            <LinkCard
-              key={link.id}
-              id={link.id}
-              url={link.url}
-              icon={link.icon}
-              title={link.title}
-              visible={link.visible}
-              first={index === 0}
-              last={index === links.length - 1}
-            />
-          ))}
-        </div>
-      )}
-      <AddLinkForm />
-    </div>
-  );
-}
-
-LinkCard.jsx
-import { useEffect, useState } from "react";
-import EditMode from "./EditMode";
-import { useLinks } from "../context/LinksContext";
-
-function LinkedCard({ id, title, url, icon, visible, first, last }) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [draft, setDraft] = useState(title);
-  const [isEditingLink, setIsEditingLink] = useState(false);
-  const [draftLink, setDraftLink] = useState(url);
-  const { handleDelete, handleToggle, moveUp, moveDown, handleUpdate } =
-    useLinks();
-
-  const handleSave = (field, value, setEditing) => {
-    if (!value.trim()) return;
-    handleUpdate(id, { [field]: value });
-    setEditing(false);
-  };
-
-  const handleCancel = () => {
-    setDraft(title); // reset draft to original
-    setIsEditing(false);
-  };
-
-  const handleCancelLink = () => {
-    setDraftLink(url); // reset draft to original
-    setIsEditingLink(false);
-  };
-
-  // Save on Enter, cancel on Escape
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") handleSave("title", draft, setIsEditing);
-    if (e.key === "Escape") handleCancel();
-  };
-
-  const handleKeyDownLink = (e) => {
-    if (e.key === "Enter") handleSave("url", draftLink, setIsEditingLink);
-    if (e.key === "Escape") handleCancelLink();
-  };
-  useEffect(() => {
-    setDraft(title);
-  }, [title]);
-  useEffect(() => {
-    setDraftLink(url);
-  }, [url]);
-
-  if (!id || !title) {
-    console.warn("Id or Title are missing");
-    return null;
-  }
-
-  return (
-    <div className="link-card">
-      <div className="info">
-        {visible ? (
-          <a href={url} target="_blank" className="icon">
-            {icon}
-          </a>
-        ) : (
-          <span className="icon">{icon}</span>
-        )}
-        <div className="title">
-          {isEditing ? (
-            <EditMode
-              value={draft}
-              setValue={setDraft}
-              handleKeyDown={handleKeyDown}
-              handleSave={() => handleSave("title", draft, setIsEditing)}
-              handleCancel={handleCancel}
-            />
-          ) : (
-            <p onDoubleClick={() => setIsEditing(true)}>{title}</p>
-          )}
-        </div>
-        {visible && (
-          <div className="url">
-            {isEditingLink ? (
-              <EditMode
-                value={draftLink}
-                setValue={setDraftLink}
-                handleKeyDown={handleKeyDownLink}
-                handleSave={() =>
-                  handleSave("url", draftLink, setIsEditingLink)
-                }
-                handleCancel={handleCancelLink}
-              />
-            ) : (
-              <p onDoubleClick={() => setIsEditingLink(true)}>{url}</p>
-            )}
-          </div>
-        )}
-      </div>
-      <div className="actions">
-        <button onClick={() => handleDelete(id)}>Delete</button>
-        <button onClick={() => handleToggle(id)}>Toggle</button>
-        {!first && <button onClick={() => moveUp(id)}>⬆️</button>}
-        {!last && <button onClick={() => moveDown(id)}>⬇️</button>}
-      </div>
-    </div>
-  );
-}
-
-export default LinkCard;
-
-ProfileHeader.jsx
-import { useTheme } from "../context/ThemeContext";
-
-export default function ProfileHeader({ name, bio, avatar }) {
-  const { setTheme } = useTheme();
-  const toggleTheme = () => {
-    setTheme((prev) => {
-      return prev === "light" ? "dark" : "light";
-    });
-  };
-  return (
-    <div className="portfolio-header">
-      <img src={avatar} />
-      <h4>{name}</h4>
-      <p>{bio}</p>
-      <button class="sw-toggle" onClick={toggleTheme}>
-        <svg
-          class="sw-toggle-icon sw-ico-moon"
-          width="15"
-          height="15"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-        >
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-        </svg>
-        <span class="sw-track">
-          <span class="sw-thumb"></span>
-        </span>
-        <svg
-          class="sw-toggle-icon sw-ico-sun"
-          width="15"
-          height="15"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.2"
-          stroke-linecap="round"
-        >
-          <circle
-            cx="12"
-            cy="12"
-            r="4"
-            fill="currentColor"
-            stroke="none"
-          ></circle>
-          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
-        </svg>
-      </button>
-    </div>
-  );
-}
-
-LinksContext.jsx
-import { useEffect } from "react";
-import { useContext } from "react";
-import { useState } from "react";
-import { createContext } from "react";
 const demoLinks = [
   {
     id: 1,
@@ -256,8 +26,8 @@ const demoLinks = [
 
 export const LinksContext = createContext(null);
 
-export function LinksProvider({ children }) {
-  const [links, setLinks] = useState(() => {
+const initialState = {
+  links: (() => {
     try {
       const savedLinks = localStorage.getItem("links");
       if (savedLinks !== null) return JSON.parse(savedLinks);
@@ -265,80 +35,136 @@ export function LinksProvider({ children }) {
     } catch {
       return [];
     }
-  });
-  const [isLoading, setIsLoading] = useState(true);
+  })(),
+};
 
-  useEffect(() => {
-    localStorage.setItem("links", JSON.stringify(links));
-    document.title = `DevLinks (${links.length})`;
-  }, [links]);
+function linksReducer(state, action) {
+  switch (action.type) {
+    case "DELETE_LINK":
+      return {
+        ...state,
+        links: state.links.filter((link) => link.id !== action.payload),
+      };
 
-  const handleDelete = (id) => {
-    setLinks((prev) => prev.filter((link) => link.id !== id));
-  };
+    case "TOGGLE_LINK":
+      return {
+        ...state,
+        links: state.links.map((link) =>
+          link.id === action.payload
+            ? { ...link, visible: !link.visible }
+            : link,
+        ),
+      };
 
-  const handleToggle = (id) => {
-    setLinks((prev) =>
-      prev.map((link) =>
-        link.id === id ? { ...link, visible: !link.visible } : link,
-      ),
-    );
-  };
+    case "ADD_LINK": {
+      const data = {
+        ...action.payload,
+        icon: action.payload.icon || "🔗",
+        visible: true,
+      };
+      return {
+        ...state,
+        links: [...state.links, { id: Date.now(), ...data }],
+      };
+    }
 
-  const handleAdd = (fields) => {
-    const data = {
-      ...fields,
-      icon: fields.icon || "🔗",
-      visible: true,
-    };
-    setLinks((prev) => [...prev, { id: Date.now(), ...data }]);
-  };
+    case "MOVE_UP": {
+      const index = state.links.findIndex((link) => link.id === action.payload);
+      if (index === 0) return state;
 
-  const checkDuplicateURL = (url) => {
-    return links.find((link) => link.url === url);
-  };
-
-  // Move item up
-  const moveUp = (id) => {
-    setLinks((prev) => {
-      const index = prev.findIndex((link) => link.id === id);
-      if (index === 0) return prev; // already first — do nothing
-
-      const updated = [...prev]; // copy array
+      const updated = [...state.links]; // copy array
       [updated[index - 1], updated[index]] = [
         updated[index],
         updated[index - 1],
       ]; // swap
-      return updated;
-    });
-  };
+      return {
+        ...state,
+        links: updated,
+      };
+    }
 
-  // Move item down in array
-  const moveDown = (id) => {
-    setLinks((prev) => {
-      const index = prev.findIndex((link) => link.id === id);
-      if (index === prev.length - 1) return prev; // already last
+    case "MOVE_DOWN": {
+      const index = state.links.findIndex((link) => link.id === action.payload);
+      if (index === state.links.length - 1) return state;
 
-      const updated = [...prev];
+      const updated = [...state.links];
       [updated[index + 1], updated[index]] = [
         updated[index],
         updated[index + 1],
       ];
-      return updated;
-    });
+      return {
+        ...state,
+        links: updated,
+      };
+    }
+
+    case "UPDATE_LINK":
+      return {
+        ...state,
+        links: state.links.map((link) =>
+          link.id === action.payload.id
+            ? { ...link, ...action.payload.fields }
+            : link,
+        ),
+      };
+
+    default:
+      return state;
+  }
+}
+
+export function LinksProvider({ children }) {
+  const [state, dispatch] = useReducer(linksReducer, initialState);
+
+  useEffect(() => {
+    localStorage.setItem("links", JSON.stringify(state.links));
+    document.title = `DevLinks (${state.links.length})`;
+  }, [state.links]);
+
+  const actions = {
+    deleteLink: (id) => ({ type: "DELETE_LINK", payload: id }),
+    toggleLink: (id) => ({ type: "TOGGLE_LINK", payload: id }),
+    addLink: (link) => ({ type: "ADD_LINK", payload: link }),
+    moveUp: (id) => ({ type: "MOVE_UP", payload: id }),
+    moveDown: (id) => ({ type: "MOVE_DOWN", payload: id }),
+    updateLink: (id, fields) => ({
+      type: "UPDATE_LINK",
+      payload: { id: id, fields: fields },
+    }),
+  };
+
+  const handleDelete = (id) => {
+    dispatch(actions.deleteLink(id));
+  };
+
+  const handleToggle = (id) => {
+    dispatch(actions.toggleLink(id));
+  };
+
+  const handleAdd = (fields) => {
+    dispatch(actions.addLink(fields));
+  };
+
+  const checkDuplicateURL = (url) => {
+    return state.links.find((link) => link.url === url);
+  };
+
+  // Move item up
+  const moveUp = (id) => {
+    dispatch(actions.moveUp(id));
+  };
+
+  // Move item down in array
+  const moveDown = (id) => {
+    dispatch(actions.moveDown(id));
   };
 
   const handleUpdate = (id, fields) => {
-    setLinks((prev) =>
-      prev.map((link) => (link.id === id ? { ...link, ...fields } : link)),
-    );
+    dispatch(actions.updateLink(id, fields));
   };
 
   const value = {
-    links,
-    setLinks,
-    isLoading,
-    setIsLoading,
+    links: state.links,
     handleDelete,
     handleAdd,
     handleToggle,
@@ -358,48 +184,6 @@ export function useLinks() {
 
   if (!context) {
     throw new Error("useLinks must be used inside LinksProvider");
-  }
-
-  return context;
-}
-
-ThemeContext.jsx
-import { useContext, useEffect } from "react";
-import { useState } from "react";
-import { createContext } from "react";
-
-export const ThemeContext = createContext(null);
-
-export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => {
-    try {
-      const savedTheme = localStorage.getItem("theme");
-      if (savedTheme !== null) return JSON.parse(savedTheme);
-      return "light";
-    } catch {
-      return "light";
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem("theme", JSON.stringify(theme));
-    document.documentElement.setAttribute("theme", theme);
-  }, [theme]);
-
-  const value = {
-    theme,
-    setTheme,
-  };
-
-  return (
-    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
-  );
-}
-
-export function useTheme() {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error("useTheme must be used inside ThemeProvider");
   }
 
   return context;
