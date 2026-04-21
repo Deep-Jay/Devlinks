@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { AddLinkForm, LinkCard, ProfileHeader, Skeleton } from "./components";
 import EmptyState from "./components/EmptyState";
-import { useLinks } from "./context/LinksContext";
+import { useLinks } from "./hooks/useLinks";
 
 export default function App() {
-  const { links } = useLinks();
+  const { links, hasLinks, linkCount } = useLinks();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log("Devlinks Mounted");
     const fakeloading = setTimeout(() => {
       setIsLoading(false);
     }, 1000);
@@ -16,7 +15,11 @@ export default function App() {
     return () => {
       clearTimeout(fakeloading);
     };
-  }, [setIsLoading]);
+  }, []);
+
+  useEffect(() => {
+    document.title = `DevLinks (${linkCount})`;
+  }, [linkCount]);
 
   if (isLoading) {
     return (
@@ -38,7 +41,7 @@ export default function App() {
         bio="Blanditiis ratione quibusdam iusto sit nostrum eos commodi et. Est fugiat aut sint ut aut."
         avatar="https://avatars.githubusercontent.com/u/83915597?v=4&size=64"
       />
-      {links.length === 0 ? (
+      {!hasLinks ? (
         <EmptyState
           icon="🪑"
           title="No links added"

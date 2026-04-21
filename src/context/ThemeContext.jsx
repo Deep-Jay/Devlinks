@@ -1,24 +1,15 @@
-import { useContext, useEffect } from "react";
-import { useState } from "react";
-import { createContext } from "react";
+import { useContext, useEffect, createContext } from "react";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 
 export const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => {
-    try {
-      const savedTheme = localStorage.getItem("theme");
-      if (savedTheme !== null) return JSON.parse(savedTheme);
-      return "light";
-    } catch {
-      return "light";
-    }
-  });
+  const [theme, setTheme] = useLocalStorage("theme", "light");
 
   useEffect(() => {
-    localStorage.setItem("theme", JSON.stringify(theme));
     document.documentElement.setAttribute("theme", theme);
   }, [theme]);
+
   const toggleTheme = () => {
     setTheme((prev) => {
       return prev === "light" ? "dark" : "light";

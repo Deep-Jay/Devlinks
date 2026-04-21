@@ -1,83 +1,51 @@
-import { useState } from "react";
-import { useLinks } from "../context/LinksContext";
+import { useForm } from "../hooks/useForm";
+import { useLinks } from "../hooks/useLinks";
 
 function AddLinkForm() {
-  const [formState, setFormState] = useState({
-    title: "",
-    url: "",
-    icon: "",
-  });
-  const [errors, setErrors] = useState({});
   const { handleAdd, checkDuplicateURL } = useLinks();
+  const { values, errors, handleChange, handleSubmit } = useForm(
+    { title: "", url: "", icon: "" },
+    (values) => {
+      const newErrors = {};
 
-  const handleFormStateChange = (field) => {
-    setFormState((prev) => ({
-      ...prev,
-      [field.name]: field.value,
-    }));
-  };
+      if (!values.title.trim()) newErrors.title = "Title is required";
 
-  const validate = () => {
-    const newErrors = {};
+      if (!values.url.trim()) newErrors.url = "URL is required";
+      else if (!values.url.startsWith("http"))
+        newErrors.url = "URL must start with http";
 
-    if (!formState.title.trim()) newErrors.title = "Title is required";
+      if (checkDuplicateURL(values.url)) {
+        newErrors.url = "URL already exists";
+      }
 
-    if (!formState.url.trim()) newErrors.url = "URL is required";
-    else if (!formState.url.startsWith("http"))
-      newErrors.url = "URL must start with http";
-
-    return newErrors;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newErrors = validate();
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    if (checkDuplicateURL(formState.url)) {
-      setErrors({
-        url: "URL already exists",
-      });
-      return;
-    }
-
-    handleAdd(formState);
-    setFormState({
-      title: "",
-      url: "",
-      icon: "",
-    });
-    setErrors({});
-  };
+      return newErrors;
+    },
+  );
 
   return (
-    <form onSubmit={handleSubmit} id="form">
+    <form onSubmit={handleSubmit(handleAdd)} id="form">
       <input
         type="text"
         name="title"
         placeholder="Title"
-        value={formState.title}
-        onChange={(e) => handleFormStateChange(e.target)}
+        value={values.title}
+        onChange={handleChange}
       />
       {errors.title && <span className="error">{errors.title}</span>}
       <input
         type="text"
         name="url"
         placeholder="Url"
-        value={formState.url}
-        onChange={(e) => handleFormStateChange(e.target)}
+        value={values.url}
+        onChange={handleChange}
       />
       {errors.url && <span className="error">{errors.url}</span>}
       <input
         type="text"
         name="icon"
         placeholder="Icon"
-        value={formState.icon}
-        onChange={(e) => handleFormStateChange(e.target)}
+        value={values.icon}
+        onChange={handleChange}
       />
       <button type="submit">Add Link</button>
     </form>

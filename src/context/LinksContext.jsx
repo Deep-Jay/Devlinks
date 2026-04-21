@@ -118,7 +118,6 @@ export function LinksProvider({ children }) {
 
   useEffect(() => {
     localStorage.setItem("links", JSON.stringify(state.links));
-    document.title = `DevLinks (${state.links.length})`;
   }, [state.links]);
 
   const actions = {
@@ -177,14 +176,4 @@ export function LinksProvider({ children }) {
   return (
     <LinksContext.Provider value={value}>{children}</LinksContext.Provider>
   );
-}
-
-export function useLinks() {
-  const context = useContext(LinksContext);
-
-  if (!context) {
-    throw new Error("useLinks must be used inside LinksProvider");
-  }
-
-  return context;
 }
