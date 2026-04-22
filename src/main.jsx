@@ -4,13 +4,16 @@ import "./index.css";
 import App from "./App.jsx";
 import { LinksProvider } from "./context/LinksContext.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
+import { ProfileProvider } from "./context/ProfileContext.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <ThemeProvider>
-      <LinksProvider>
-        <App />
-      </LinksProvider>
+      <ProfileProvider>
+        <LinksProvider>
+          <App />
+        </LinksProvider>
+      </ProfileProvider>
     </ThemeProvider>
   </StrictMode>,
 );

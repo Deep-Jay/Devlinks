@@ -1,28 +1,4 @@
-import { useEffect, useContext, createContext, useReducer } from "react";
-
-const demoLinks = [
-  {
-    id: 1,
-    title: "GitHub",
-    url: "https://github.com",
-    icon: "🐙",
-    visible: true,
-  },
-  {
-    id: 2,
-    title: "LinkedIn",
-    url: "https://linkedin.com",
-    icon: "💼",
-    visible: true,
-  },
-  {
-    id: 3,
-    title: "Twitter",
-    url: "https://twitter.com",
-    icon: "🐦",
-    visible: true,
-  },
-];
+import { useEffect, createContext, useReducer } from "react";
 
 export const LinksContext = createContext(null);
 
@@ -31,7 +7,7 @@ const initialState = {
     try {
       const savedLinks = localStorage.getItem("links");
       if (savedLinks !== null) return JSON.parse(savedLinks);
-      return demoLinks;
+      return [];
     } catch {
       return [];
     }

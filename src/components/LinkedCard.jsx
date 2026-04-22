@@ -3,7 +3,7 @@ import EditMode from "./EditMode";
 import { useToggle } from "../hooks/useToggle";
 import { useLinks } from "../hooks/useLinks";
 
-function LinkedCard({ id, title, url, icon, visible, first, last }) {
+function LinkedCard({ id, title, url, icon, visible, first, last, editPane }) {
   const [editTitle, , activeTitle, inactiveTitle] = useToggle(false);
   const [draft, setDraft] = useState(title);
   const [editLink, , activeLink, inactiveLink] = useToggle(false);
@@ -63,7 +63,7 @@ function LinkedCard({ id, title, url, icon, visible, first, last }) {
           {editTitle ? (
             <EditMode
               value={draft}
-              setValue={setDraft}
+              setValue={(e) => setDraft(e.target.value)}
               handleKeyDown={handleKeyDown}
               handleSave={() => handleSave("title", draft, inactiveTitle)}
               handleCancel={handleCancel}
@@ -77,7 +77,7 @@ function LinkedCard({ id, title, url, icon, visible, first, last }) {
             {editLink ? (
               <EditMode
                 value={draftLink}
-                setValue={setDraftLink}
+                setValue={(e) => setDraftLink(e.target.value)}
                 handleKeyDown={handleKeyDownLink}
                 handleSave={() => handleSave("url", draftLink, inactiveLink)}
                 handleCancel={handleCancelLink}
@@ -88,12 +88,14 @@ function LinkedCard({ id, title, url, icon, visible, first, last }) {
           </div>
         )}
       </div>
-      <div className="actions">
-        <button onClick={() => handleDelete(id)}>Delete</button>
-        <button onClick={() => handleToggle(id)}>Toggle</button>
-        {!first && <button onClick={() => moveUp(id)}>⬆️</button>}
-        {!last && <button onClick={() => moveDown(id)}>⬇️</button>}
-      </div>
+      {editPane && (
+        <div className="actions">
+          <button onClick={() => handleDelete(id)}>Delete</button>
+          <button onClick={() => handleToggle(id)}>Toggle</button>
+          {!first && <button onClick={() => moveUp(id)}>⬆️</button>}
+          {!last && <button onClick={() => moveDown(id)}>⬇️</button>}
+        </div>
+      )}
     </div>
   );
 }

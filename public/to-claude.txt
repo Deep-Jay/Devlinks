@@ -1,60 +1,290 @@
+LinkCard.jsx
 import { useEffect, useState } from "react";
-import { AddLinkForm, LinkCard, ProfileHeader, Skeleton } from "./components";
-import EmptyState from "./components/EmptyState";
-import { useLinks } from "./hooks/useLinks";
+import EditMode from "./EditMode";
+import { useToggle } from "../hooks/useToggle";
+import { useLinks } from "../hooks/useLinks";
 
-export default function App() {
-  const { links, hasLinks, linkCount } = useLinks();
-  const [isLoading, setIsLoading] = useState(true);
+function LinkCard({ id, title, url, icon, visible, first, last, editPane }) {
+  const [editTitle, , activeTitle, inactiveTitle] = useToggle(false);
+  const [draft, setDraft] = useState(title);
+  const [editLink, , activeLink, inactiveLink] = useToggle(false);
+  const [draftLink, setDraftLink] = useState(url);
+  const { handleDelete, handleToggle, moveUp, moveDown, handleUpdate } =
+    useLinks();
 
+  const handleSave = (field, value, inactivate) => {
+    if (!value.trim()) return;
+    handleUpdate(id, { [field]: value });
+    inactivate();
+  };
+
+  const handleCancel = () => {
+    setDraft(title); // reset draft to original
+    inactiveTitle();
+  };
+
+  const handleCancelLink = () => {
+    setDraftLink(url); // reset draft to original
+    inactiveLink();
+  };
+
+  // Save on Enter, cancel on Escape
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") handleSave("title", draft, inactiveTitle);
+    if (e.key === "Escape") handleCancel();
+  };
+
+  const handleKeyDownLink = (e) => {
+    if (e.key === "Enter") handleSave("url", draftLink, inactiveLink);
+    if (e.key === "Escape") handleCancelLink();
+  };
   useEffect(() => {
-    console.log("Devlinks Mounted");
-    const fakeloading = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-
-    return () => {
-      clearTimeout(fakeloading);
-    };
-  }, [setIsLoading]);
-
+    setDraft(title);
+  }, [title]);
   useEffect(() => {
-    document.title = `DevLinks (${linkCount})`;
-  }, [linkCount]);
+    setDraftLink(url);
+  }, [url]);
 
-  if (isLoading) {
-    return (
-      <div className="container">
-        <Skeleton type="header" />
-        <div className="link-grid">
-          <Skeleton type="card" />
-          <Skeleton type="card" />
-          <Skeleton type="card" />
-        </div>
-      </div>
-    );
+  if (!id || !title) {
+    console.warn("Id or Title are missing");
+    return null;
   }
 
   return (
-    <div className="container">
-      <ProfileHeader
-        name="Jaydeep"
-        bio="Blanditiis ratione quibusdam iusto sit nostrum eos commodi et. Est fugiat aut sint ut aut."
-        avatar="https://avatars.githubusercontent.com/u/83915597?v=4&size=64"
-      />
-      {!hasLinks ? (
-        <EmptyState
-          icon="🪑"
-          title="No links added"
-          message={
-            <a className="btn" href="#form">
-              Add your first link below ↴
-            </a>
+    <div className="link-card">
+      <div className="info">
+        {visible ? (
+          <a href={url} target="_blank" className="icon">
+            {icon}
+          </a>
+        ) : (
+          <span className="icon">{icon}</span>
+        )}
+        <div className="title">
+          {editTitle ? (
+            <EditMode
+              value={draft}
+              setValue={(e) => setDraft(e.target.value)}
+              handleKeyDown={handleKeyDown}
+              handleSave={() => handleSave("title", draft, inactiveTitle)}
+              handleCancel={handleCancel}
+            />
+          ) : (
+            <p onDoubleClick={activeTitle}>{title}</p>
+          )}
+        </div>
+        {visible && (
+          <div className="url">
+            {editLink ? (
+              <EditMode
+                value={draftLink}
+                setValue={(e) => setDraftLink(e.target.value)}
+                handleKeyDown={handleKeyDownLink}
+                handleSave={() => handleSave("url", draftLink, inactiveLink)}
+                handleCancel={handleCancelLink}
+              />
+            ) : (
+              <p onDoubleClick={activeLink}>{url}</p>
+            )}
+          </div>
+        )}
+      </div>
+      {editPane && (
+        <div className="actions">
+          <button onClick={() => handleDelete(id)}>Delete</button>
+          <button onClick={() => handleToggle(id)}>Toggle</button>
+          {!first && <button onClick={() => moveUp(id)}>⬆️</button>}
+          {!last && <button onClick={() => moveDown(id)}>⬇️</button>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default LinkCard;
+
+--------------------------------------------------------------------------------
+
+ProfileContext.jsx
+import { useContext, createContext } from "react";
+import { useLocalStorage } from "../hooks/useLocalStorage";
+
+export const ProfileContext = createContext(null);
+const initialProfile = {
+  name: "Jaydeep",
+  bio: "Blanditiis ratione quibusdam iusto sit nostrum eos commodi et. Est fugiat aut sint ut aut.",
+  avatar: "https://avatars.githubusercontent.com/u/83915597?v=4&size=64",
+};
+
+export function ProfileProvider({ children }) {
+  const [profile, setProfile] = useLocalStorage("profile", initialProfile);
+
+  const updateField = (field, value) => {
+    setProfile((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const value = {
+    ...profile,
+    updateField,
+  };
+
+  return (
+    <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>
+  );
+}
+
+export function useProfile() {
+  const context = useContext(ProfileContext);
+  if (!context) {
+    throw new Error("useProfile must be used inside ProfileContext");
+  }
+
+  return context;
+}
+
+--------------------------------------------------------------------
+
+ProfileHeader.jsx
+import { useState, useEffect } from "react";
+import { useProfile } from "../context/ProfileContext";
+import { useToggle } from "../hooks/useToggle";
+import EditMode from "./EditMode";
+import ThemeToggleButton from "./ThemeToggleButton";
+import CopyURLButton from "./CopyURLButton";
+
+export default function ProfileHeader({ editPane }) {
+  const { name, bio, avatar, updateField } = useProfile();
+  const [editName, , activeName, inactiveName] = useToggle(false);
+  const [editBio, , activeBio, inactiveBio] = useToggle(false);
+  const [editAvatar, , activeAvatar, inactiveAvatar] = useToggle(false);
+  const [draft, setDraft] = useState({
+    name: "",
+    bio: "",
+    avatar: "",
+  });
+
+  const handleDraftUpdate = (field, value) => {
+    setDraft((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleSave = (field, value, inactivate) => {
+    if (!value.trim()) return;
+    updateField(field, value);
+    inactivate();
+  };
+
+  const handleCancel = (field, value, updateValue, inactivate) => {
+    updateValue(field, value);
+    inactivate();
+  };
+
+  const nameKeyDown = (e) => {
+    if (e.key === "Enter") handleSave("name", draft.name, inactiveName);
+    if (e.key === "Escape")
+      handleCancel("name", name, handleDraftUpdate, inactiveName);
+  };
+
+  const bioKeyDown = (e) => {
+    if (e.key === "Enter") handleSave("bio", draft.bio, inactiveBio);
+    if (e.key === "Escape")
+      handleCancel("bio", bio, handleDraftUpdate, inactiveBio);
+  };
+
+  const avatarKeyDown = (e) => {
+    if (e.key === "Enter") handleSave("avatar", draft.avatar, inactiveAvatar);
+    if (e.key === "Escape")
+      handleCancel("avatar", avatar, handleDraftUpdate, inactiveAvatar);
+  };
+
+  useEffect(() => {
+    setDraft({
+      name: name,
+      bio: bio,
+      avatar: avatar,
+    });
+  }, [name, bio, avatar]);
+
+  return (
+    <div className="portfolio-header">
+      {editAvatar ? (
+        <EditMode
+          value={draft.avatar}
+          setValue={(e) => handleDraftUpdate("avatar", e.target.value)}
+          handleKeyDown={avatarKeyDown}
+          handleSave={() => handleSave("avatar", draft.avatar, inactiveAvatar)}
+          handleCancel={() =>
+            handleCancel("avatar", avatar, handleDraftUpdate, inactiveAvatar)
           }
         />
       ) : (
+        <img onDoubleClick={activeAvatar} src={avatar} />
+      )}
+      {editName ? (
+        <EditMode
+          value={draft.name}
+          setValue={(e) => handleDraftUpdate("name", e.target.value)}
+          handleKeyDown={nameKeyDown}
+          handleSave={() => handleSave("name", draft.name, inactiveName)}
+          handleCancel={() =>
+            handleCancel("name", name, handleDraftUpdate, inactiveName)
+          }
+        />
+      ) : (
+        <h4 onDoubleClick={activeName}>{name}</h4>
+      )}
+      {editBio ? (
+        <EditMode
+          value={draft.bio}
+          setValue={(e) => handleDraftUpdate("bio", e.target.value)}
+          handleKeyDown={bioKeyDown}
+          handleSave={() => handleSave("bio", draft.bio, inactiveBio)}
+          handleCancel={() =>
+            handleCancel("bio", bio, handleDraftUpdate, inactiveBio)
+          }
+          textarea
+        />
+      ) : (
+        <p onDoubleClick={activeBio}>{bio}</p>
+      )}
+      <div className="float-actions">
+        {editPane ? (
+          <div className="actions">
+            <CopyURLButton />
+          </div>
+        ) : (
+          <ThemeToggleButton />
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+------------------------------------------------------------------------
+
+PreviewPane.jsx
+import { LinkCard } from ".";
+import { useLinks } from "../hooks/useLinks";
+import EmptyState from "./EmptyState";
+import ProfileHeader from "./ProfileHeader";
+
+export default function PreviewPane() {
+  const { visibleLinks, hasLinks } = useLinks();
+
+  return (
+    <>
+      <ProfileHeader />
+      {!hasLinks ? (
+        <EmptyState icon="🪑" title="No links found" message="" />
+      ) : (
         <div className="link-grid">
-          {links.map((link, index) => (
+          {visibleLinks.map((link) => (
             <LinkCard
               key={link.id}
               id={link.id}
@@ -62,13 +292,10 @@ export default function App() {
               icon={link.icon}
               title={link.title}
               visible={link.visible}
-              first={index === 0}
-              last={index === links.length - 1}
             />
           ))}
         </div>
       )}
-      <AddLinkForm />
-    </div>
+    </>
   );
 }

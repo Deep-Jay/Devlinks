@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
-import { AddLinkForm, LinkCard, ProfileHeader, Skeleton } from "./components";
-import EmptyState from "./components/EmptyState";
+import {
+  AddLinkForm,
+  EmptyState,
+  LinkCard,
+  ProfileHeader,
+  Skeleton,
+} from "./components";
 import { useLinks } from "./hooks/useLinks";
+import PreviewPane from "./components/PreviewPane";
 
 export default function App() {
   const { links, hasLinks, linkCount } = useLinks();
@@ -24,11 +30,17 @@ export default function App() {
   if (isLoading) {
     return (
       <div className="container">
-        <Skeleton type="header" />
-        <div className="link-grid">
-          <Skeleton type="card" />
-          <Skeleton type="card" />
-          <Skeleton type="card" />
+        <div className="split-pane">
+          <div className="edit-pane">
+            <Skeleton type="header" />
+            <div className="link-grid">
+              <Skeleton type="card" />
+              <Skeleton type="card" />
+              <Skeleton type="card" />
+            </div>
+          </div>
+          <div className="divider"></div>
+          <div className="preview-pane"></div>
         </div>
       </div>
     );
@@ -36,38 +48,43 @@ export default function App() {
 
   return (
     <div className="container">
-      <ProfileHeader
-        name="Jaydeep"
-        bio="Blanditiis ratione quibusdam iusto sit nostrum eos commodi et. Est fugiat aut sint ut aut."
-        avatar="https://avatars.githubusercontent.com/u/83915597?v=4&size=64"
-      />
-      {!hasLinks ? (
-        <EmptyState
-          icon="🪑"
-          title="No links added"
-          message={
-            <a className="btn" href="#form">
-              Add your first link below ↴
-            </a>
-          }
-        />
-      ) : (
-        <div className="link-grid">
-          {links.map((link, index) => (
-            <LinkCard
-              key={link.id}
-              id={link.id}
-              url={link.url}
-              icon={link.icon}
-              title={link.title}
-              visible={link.visible}
-              first={index === 0}
-              last={index === links.length - 1}
+      <div className="split-pane">
+        <div className="edit-pane">
+          <ProfileHeader editPane />
+          {!hasLinks ? (
+            <EmptyState
+              icon="🪑"
+              title="No links added"
+              message={
+                <a className="btn" href="#form">
+                  Add your first link below ↴
+                </a>
+              }
             />
-          ))}
+          ) : (
+            <div className="link-grid">
+              {links.map((link, index) => (
+                <LinkCard
+                  key={link.id}
+                  id={link.id}
+                  url={link.url}
+                  icon={link.icon}
+                  title={link.title}
+                  visible={link.visible}
+                  first={index === 0}
+                  last={index === links.length - 1}
+                  editPane
+                />
+              ))}
+            </div>
+          )}
+          <AddLinkForm />
         </div>
-      )}
-      <AddLinkForm />
+        <div className="divider"></div>
+        <div className="preview-pane">
+          <PreviewPane />
+        </div>
+      </div>
     </div>
   );
 }

@@ -55,10 +55,6 @@ body {
             transparent 40%
         );
     color: var(--text-main);
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    padding: 3rem 1rem;
     line-height: 1.5;
     transition:
         background-color 0.3s ease,
@@ -71,20 +67,6 @@ body {
     padding: 0;
 }
 
-body {
-    font-family: "Inter", system-ui, sans-serif;
-    background-color: var(--bg-color);
-    background-image:
-        radial-gradient(circle at top right, #1e293b 0%, transparent 40%),
-        radial-gradient(circle at bottom left, #1e293b 0%, transparent 40%);
-    color: var(--text-main);
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    padding: 3rem 1rem;
-    line-height: 1.5;
-}
-
 a {
     color: inherit;
     text-decoration: none;
@@ -93,16 +75,29 @@ a {
 /* 2. Main Layout */
 .container {
     width: 100%;
-    max-width: 560px;
-    display: flex;
-    flex-direction: column;
-    gap: 2.5rem;
+    margin-inline: auto;
+    padding: 2rem 4rem;
 }
 
 /* 3. Portfolio Header */
 .portfolio-header {
     text-align: center;
     position: relative;
+    .float-actions {
+        position: absolute;
+        top: 0;
+        right: 5px;
+    }
+    .edit-mode {
+        max-width: 500px;
+    }
+}
+
+.edit-pane .portfolio-header {
+    text-align: left;
+    p {
+        margin: 0;
+    }
 }
 
 .portfolio-header img {
@@ -157,6 +152,10 @@ a {
     transform: translateY(-2px);
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
     /*background: rgba(40, 53, 72, 0.7);*/
+}
+
+.link-card:not(:has(a)) {
+    opacity: 0.5;
 }
 
 /* 5. Info Section (Grid magic for zero layout shift) */
@@ -328,7 +327,7 @@ form button[type="submit"]:active {
 }
 
 /* 3. Full-Width Input */
-.edit-mode input {
+.edit-mode :where(input, textarea) {
     width: 100%; /* Forces full width of the available space */
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid var(--accent);
@@ -444,7 +443,7 @@ input:has(+ .error) {
 .header-center {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: start;
     gap: 12px;
     margin-bottom: 40px;
 }
@@ -534,9 +533,6 @@ input:has(+ .error) {
     border-radius: 99px;
     color: var(--text-main);
     transition: background 0.2s;
-    position: absolute;
-    top: 0;
-    right: 5px;
 }
 
 .sw-toggle:hover {
@@ -585,4 +581,41 @@ html:not([theme="light"]) .sw-ico-moon {
 
 html[theme="light"] .sw-ico-sun {
     opacity: 1;
+}
+
+.split-pane {
+    display: grid;
+    grid-template-columns: 1fr 2px 460px;
+    grid-template-rows: auto;
+    gap: 20px 50px;
+    align-items: start;
+    & > div {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+}
+
+.divider {
+    height: 2px;
+    background-color: var(--bg-color);
+    filter: invert();
+}
+
+@media screen and (min-width: 992px) {
+    .preview-pane,
+    .divider {
+        position: sticky;
+        top: 2rem;
+        z-index: 999;
+    }
+    .divider {
+        height: calc(100vh - 4rem);
+    }
+}
+
+@media screen and (max-width: 991px) {
+    .split-pane {
+        grid-template-columns: 1fr;
+    }
 }
