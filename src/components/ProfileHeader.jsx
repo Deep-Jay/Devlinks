@@ -73,7 +73,7 @@ export default function ProfileHeader({ editPane }) {
           }
         />
       ) : (
-        <img onDoubleClick={activeAvatar} src={avatar} />
+        <img onDoubleClick={editPane ? activeAvatar : undefined} src={avatar} />
       )}
       {editName ? (
         <EditMode
@@ -86,7 +86,7 @@ export default function ProfileHeader({ editPane }) {
           }
         />
       ) : (
-        <h4 onDoubleClick={activeName}>{name}</h4>
+        <h4 onDoubleClick={editPane && activeName}>{name}</h4>
       )}
       {editBio ? (
         <EditMode
@@ -100,7 +100,7 @@ export default function ProfileHeader({ editPane }) {
           textarea
         />
       ) : (
-        <p onDoubleClick={activeBio}>{bio}</p>
+        <p onDoubleClick={editPane && activeBio}>{bio}</p>
       )}
       <div className="float-actions">
         {editPane ? (

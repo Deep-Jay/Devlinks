@@ -1,5 +1,6 @@
 import { useForm } from "../hooks/useForm";
 import { useLinks } from "../hooks/useLinks";
+import SocialSelect from "./SocialSelect";
 
 function AddLinkForm() {
   const { handleAdd, checkDuplicateURL } = useLinks();
@@ -40,13 +41,44 @@ function AddLinkForm() {
         onChange={handleChange}
       />
       {errors.url && <span className="error">{errors.url}</span>}
-      <input
-        type="text"
+      <select
         name="icon"
-        placeholder="Icon"
+        id="social_platform"
         value={values.icon}
         onChange={handleChange}
-      />
+      >
+        <option value="">Icon</option>
+
+        {/* Developer & Professional */}
+        <option value="">-- Choose --</option>
+
+        {/* Developer & Professional */}
+        <option value="🐙">🐙 GitHub</option>
+        <option value="💼">💼 LinkedIn</option>
+        <option value="💻">💻 Stack Overflow</option>
+        <option value="👾">👾 Discord</option>
+        <option value="💬">💬 Slack</option>
+
+        {/* Social & Networking */}
+        <option value="🐦">🐦 Twitter / X</option>
+        <option value="👥">👥 Facebook</option>
+        <option value="📸">📸 Instagram</option>
+        <option value="🧵">🧵 Threads</option>
+        <option value="🤖">🤖 Reddit</option>
+
+        {/* Video & Creative */}
+        <option value="📺">📺 YouTube</option>
+        <option value="🎮">🎮 Twitch</option>
+        <option value="🎵">🎵 TikTok</option>
+        <option value="🎨">🎨 Behance</option>
+        <option value="📌">📌 Pinterest</option>
+
+        {/* Communication & Web */}
+        <option value="📞">📞 WhatsApp</option>
+        <option value="✈️">✈️ Telegram</option>
+        <option value="✍️">✍️ Medium</option>
+        <option value="🌐">🌐 Website</option>
+      </select>
       <button type="submit">Add Link</button>
     </form>
   );

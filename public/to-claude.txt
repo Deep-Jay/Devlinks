@@ -1,16 +1,204 @@
+LinksContext.jsx
+import { useEffect, createContext, useReducer } from "react";
+
+export const LinksContext = createContext(null);
+
+const initialState = {
+  links: (() => {
+    try {
+      const savedLinks = localStorage.getItem("links");
+      if (savedLinks !== null) return JSON.parse(savedLinks);
+      return [];
+    } catch {
+      return [];
+    }
+  })(),
+};
+
+function linksReducer(state, action) {
+  switch (action.type) {
+    case "DELETE_LINK":
+      return {
+        ...state,
+        links: state.links.filter((link) => link.id !== action.payload),
+      };
+
+    case "TOGGLE_LINK":
+      return {
+        ...state,
+        links: state.links.map((link) =>
+          link.id === action.payload
+            ? { ...link, visible: !link.visible }
+            : link,
+        ),
+      };
+
+    case "ADD_LINK": {
+      const data = {
+        ...action.payload,
+        icon: action.payload.icon || "🔗",
+        visible: true,
+      };
+      return {
+        ...state,
+        links: [...state.links, { id: Date.now(), ...data }],
+      };
+    }
+
+    // case "MOVE_UP": {
+    //   const index = state.links.findIndex((link) => link.id === action.payload);
+    //   if (index === 0) return state;
+
+    //   const updated = [...state.links]; // copy array
+    //   [updated[index - 1], updated[index]] = [
+    //     updated[index],
+    //     updated[index - 1],
+    //   ]; // swap
+    //   return {
+    //     ...state,
+    //     links: updated,
+    //   };
+    // }
+
+    // case "MOVE_DOWN": {
+    //   const index = state.links.findIndex((link) => link.id === action.payload);
+    //   if (index === state.links.length - 1) return state;
+
+    //   const updated = [...state.links];
+    //   [updated[index + 1], updated[index]] = [
+    //     updated[index],
+    //     updated[index + 1],
+    //   ];
+    //   return {
+    //     ...state,
+    //     links: updated,
+    //   };
+    // }
+
+    case "UPDATE_LINK":
+      return {
+        ...state,
+        links: state.links.map((link) =>
+          link.id === action.payload.id
+            ? { ...link, ...action.payload.fields }
+            : link,
+        ),
+      };
+
+    case "REORDER_LINKS":
+      return {
+        ...state,
+        links: action.payload, // payload is the already-reordered array
+      };
+
+    default:
+      return state;
+  }
+}
+
+export function LinksProvider({ children }) {
+  const [state, dispatch] = useReducer(linksReducer, initialState);
+
+  useEffect(() => {
+    localStorage.setItem("links", JSON.stringify(state.links));
+  }, [state.links]);
+
+  const actions = {
+    deleteLink: (id) => ({ type: "DELETE_LINK", payload: id }),
+    toggleLink: (id) => ({ type: "TOGGLE_LINK", payload: id }),
+    addLink: (link) => ({ type: "ADD_LINK", payload: link }),
+    // moveUp: (id) => ({ type: "MOVE_UP", payload: id }),
+    // moveDown: (id) => ({ type: "MOVE_DOWN", payload: id }),
+    updateLink: (id, fields) => ({
+      type: "UPDATE_LINK",
+      payload: { id: id, fields: fields },
+    }),
+    reorderLinks: (array) => ({ type: "REORDER_LINKS", payload: array }),
+  };
+
+  const handleDelete = (id) => {
+    dispatch(actions.deleteLink(id));
+  };
+
+  const handleToggle = (id) => {
+    dispatch(actions.toggleLink(id));
+  };
+
+  const handleAdd = (fields) => {
+    dispatch(actions.addLink(fields));
+  };
+
+  const checkDuplicateURL = (url) => {
+    return state.links.find((link) => link.url === url);
+  };
+
+  // // Move item up
+  // const moveUp = (id) => {
+  //   dispatch(actions.moveUp(id));
+  // };
+
+  // // Move item down in array
+  // const moveDown = (id) => {
+  //   dispatch(actions.moveDown(id));
+  // };
+
+  const handleUpdate = (id, fields) => {
+    dispatch(actions.updateLink(id, fields));
+  };
+
+  const reorderLinks = (reorderedLinks) => {
+    dispatch(actions.reorderLinks(reorderedLinks));
+  };
+
+  const value = {
+    links: state.links,
+    handleDelete,
+    handleAdd,
+    handleToggle,
+    handleUpdate,
+    checkDuplicateURL,
+    reorderLinks,
+  };
+
+  return (
+    <LinksContext.Provider value={value}>{children}</LinksContext.Provider>
+  );
+}
+
+-------------------------------------------------------------------------------
+
 LinkCard.jsx
 import { useEffect, useState } from "react";
 import EditMode from "./EditMode";
 import { useToggle } from "../hooks/useToggle";
 import { useLinks } from "../hooks/useLinks";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
-function LinkCard({ id, title, url, icon, visible, first, last, editPane }) {
+function LinkCard({ id, title, url, icon, visible, editPane }) {
   const [editTitle, , activeTitle, inactiveTitle] = useToggle(false);
   const [draft, setDraft] = useState(title);
   const [editLink, , activeLink, inactiveLink] = useToggle(false);
   const [draftLink, setDraftLink] = useState(url);
   const { handleDelete, handleToggle, moveUp, moveDown, handleUpdate } =
     useLinks();
+
+  const {
+    attributes, // aria attributes for accessibility
+    listeners, // event listeners for drag trigger
+    setNodeRef, // ref to attach to the DOM element
+    transform, // current drag position
+    transition, // smooth animation
+    isDragging, // true while being dragged
+  } = useSortable({ id });
+
+  // CSS.Transform.toString converts transform object to CSS string
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1, // fade while dragging
+    cursor: isDragging ? "grabbing" : "grab",
+  };
 
   const handleSave = (field, value, inactivate) => {
     if (!value.trim()) return;
@@ -51,7 +239,12 @@ function LinkCard({ id, title, url, icon, visible, first, last, editPane }) {
   }
 
   return (
-    <div className="link-card">
+    <div
+      className="link-card"
+      ref={setNodeRef} // attach ref — dnd-kit tracks this DOM node
+      style={style} // apply transform + transition
+      {...attributes}
+    >
       <div className="info">
         {visible ? (
           <a href={url} target="_blank" className="icon">
@@ -93,8 +286,9 @@ function LinkCard({ id, title, url, icon, visible, first, last, editPane }) {
         <div className="actions">
           <button onClick={() => handleDelete(id)}>Delete</button>
           <button onClick={() => handleToggle(id)}>Toggle</button>
-          {!first && <button onClick={() => moveUp(id)}>⬆️</button>}
-          {!last && <button onClick={() => moveDown(id)}>⬇️</button>}
+          <button className="drag-handle" {...listeners}>
+            ⠿
+          </button>
         </div>
       )}
     </div>
@@ -103,199 +297,137 @@ function LinkCard({ id, title, url, icon, visible, first, last, editPane }) {
 
 export default LinkCard;
 
---------------------------------------------------------------------------------
+----------------------------------------------------------------------
 
-ProfileContext.jsx
-import { useContext, createContext } from "react";
-import { useLocalStorage } from "../hooks/useLocalStorage";
 
-export const ProfileContext = createContext(null);
-const initialProfile = {
-  name: "Jaydeep",
-  bio: "Blanditiis ratione quibusdam iusto sit nostrum eos commodi et. Est fugiat aut sint ut aut.",
-  avatar: "https://avatars.githubusercontent.com/u/83915597?v=4&size=64",
-};
+App.jsx
+import { useEffect, useState } from "react";
+import {
+  AddLinkForm,
+  EmptyState,
+  LinkCard,
+  ProfileHeader,
+  Skeleton,
+} from "./components";
+import { useLinks } from "./hooks/useLinks";
+import PreviewPane from "./components/PreviewPane";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { arrayMove } from "@dnd-kit/sortable";
 
-export function ProfileProvider({ children }) {
-  const [profile, setProfile] = useLocalStorage("profile", initialProfile);
+export default function App() {
+  const { links, hasLinks, linkCount, reorderLinks } = useLinks();
+  const [isLoading, setIsLoading] = useState(true);
 
-  const updateField = (field, value) => {
-    setProfile((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const value = {
-    ...profile,
-    updateField,
-  };
-
-  return (
-    <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
-}
 
-export function useProfile() {
-  const context = useContext(ProfileContext);
-  if (!context) {
-    throw new Error("useProfile must be used inside ProfileContext");
-  }
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
 
-  return context;
-}
+    const oldIndex = links.findIndex((l) => l.id === active.id);
+    const newIndex = links.findIndex((l) => l.id === over.id);
 
---------------------------------------------------------------------
-
-ProfileHeader.jsx
-import { useState, useEffect } from "react";
-import { useProfile } from "../context/ProfileContext";
-import { useToggle } from "../hooks/useToggle";
-import EditMode from "./EditMode";
-import ThemeToggleButton from "./ThemeToggleButton";
-import CopyURLButton from "./CopyURLButton";
-
-export default function ProfileHeader({ editPane }) {
-  const { name, bio, avatar, updateField } = useProfile();
-  const [editName, , activeName, inactiveName] = useToggle(false);
-  const [editBio, , activeBio, inactiveBio] = useToggle(false);
-  const [editAvatar, , activeAvatar, inactiveAvatar] = useToggle(false);
-  const [draft, setDraft] = useState({
-    name: "",
-    bio: "",
-    avatar: "",
-  });
-
-  const handleDraftUpdate = (field, value) => {
-    setDraft((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const handleSave = (field, value, inactivate) => {
-    if (!value.trim()) return;
-    updateField(field, value);
-    inactivate();
-  };
-
-  const handleCancel = (field, value, updateValue, inactivate) => {
-    updateValue(field, value);
-    inactivate();
-  };
-
-  const nameKeyDown = (e) => {
-    if (e.key === "Enter") handleSave("name", draft.name, inactiveName);
-    if (e.key === "Escape")
-      handleCancel("name", name, handleDraftUpdate, inactiveName);
-  };
-
-  const bioKeyDown = (e) => {
-    if (e.key === "Enter") handleSave("bio", draft.bio, inactiveBio);
-    if (e.key === "Escape")
-      handleCancel("bio", bio, handleDraftUpdate, inactiveBio);
-  };
-
-  const avatarKeyDown = (e) => {
-    if (e.key === "Enter") handleSave("avatar", draft.avatar, inactiveAvatar);
-    if (e.key === "Escape")
-      handleCancel("avatar", avatar, handleDraftUpdate, inactiveAvatar);
+    reorderLinks(arrayMove(links, oldIndex, newIndex));
   };
 
   useEffect(() => {
-    setDraft({
-      name: name,
-      bio: bio,
-      avatar: avatar,
-    });
-  }, [name, bio, avatar]);
+    const fakeloading = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+
+    return () => {
+      clearTimeout(fakeloading);
+    };
+  }, []);
+
+  useEffect(() => {
+    document.title = `DevLinks (${linkCount})`;
+  }, [linkCount]);
+
+  if (isLoading) {
+    return (
+      <div className="container">
+        <div className="split-pane">
+          <div className="edit-pane">
+            <Skeleton type="header" />
+            <div className="link-grid">
+              <Skeleton type="card" />
+              <Skeleton type="card" />
+              <Skeleton type="card" />
+            </div>
+          </div>
+          <div className="divider"></div>
+          <div className="preview-pane"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="portfolio-header">
-      {editAvatar ? (
-        <EditMode
-          value={draft.avatar}
-          setValue={(e) => handleDraftUpdate("avatar", e.target.value)}
-          handleKeyDown={avatarKeyDown}
-          handleSave={() => handleSave("avatar", draft.avatar, inactiveAvatar)}
-          handleCancel={() =>
-            handleCancel("avatar", avatar, handleDraftUpdate, inactiveAvatar)
-          }
-        />
-      ) : (
-        <img onDoubleClick={activeAvatar} src={avatar} />
-      )}
-      {editName ? (
-        <EditMode
-          value={draft.name}
-          setValue={(e) => handleDraftUpdate("name", e.target.value)}
-          handleKeyDown={nameKeyDown}
-          handleSave={() => handleSave("name", draft.name, inactiveName)}
-          handleCancel={() =>
-            handleCancel("name", name, handleDraftUpdate, inactiveName)
-          }
-        />
-      ) : (
-        <h4 onDoubleClick={activeName}>{name}</h4>
-      )}
-      {editBio ? (
-        <EditMode
-          value={draft.bio}
-          setValue={(e) => handleDraftUpdate("bio", e.target.value)}
-          handleKeyDown={bioKeyDown}
-          handleSave={() => handleSave("bio", draft.bio, inactiveBio)}
-          handleCancel={() =>
-            handleCancel("bio", bio, handleDraftUpdate, inactiveBio)
-          }
-          textarea
-        />
-      ) : (
-        <p onDoubleClick={activeBio}>{bio}</p>
-      )}
-      <div className="float-actions">
-        {editPane ? (
-          <div className="actions">
-            <CopyURLButton />
-          </div>
-        ) : (
-          <ThemeToggleButton />
-        )}
+    <div className="container">
+      <div className="split-pane">
+        <div className="edit-pane">
+          <ProfileHeader editPane />
+          {!hasLinks ? (
+            <EmptyState
+              icon="🪑"
+              title="No links added"
+              message={
+                <a className="btn" href="#form">
+                  Add your first link below ↴
+                </a>
+              }
+            />
+          ) : (
+            <div className="link-grid">
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={links.map((l) => l.id)} // just the IDs in order
+                  strategy={verticalListSortingStrategy}
+                >
+                  {links.map((link) => (
+                    <LinkCard
+                      key={link.id}
+                      id={link.id}
+                      url={link.url}
+                      icon={link.icon}
+                      title={link.title}
+                      visible={link.visible}
+                      editPane
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+            </div>
+          )}
+          <AddLinkForm />
+        </div>
+        <div className="divider"></div>
+        <div className="preview-pane">
+          <PreviewPane />
+        </div>
       </div>
     </div>
-  );
-}
-
-
-------------------------------------------------------------------------
-
-PreviewPane.jsx
-import { LinkCard } from ".";
-import { useLinks } from "../hooks/useLinks";
-import EmptyState from "./EmptyState";
-import ProfileHeader from "./ProfileHeader";
-
-export default function PreviewPane() {
-  const { visibleLinks, hasLinks } = useLinks();
-
-  return (
-    <>
-      <ProfileHeader />
-      {!hasLinks ? (
-        <EmptyState icon="🪑" title="No links found" message="" />
-      ) : (
-        <div className="link-grid">
-          {visibleLinks.map((link) => (
-            <LinkCard
-              key={link.id}
-              id={link.id}
-              url={link.url}
-              icon={link.icon}
-              title={link.title}
-              visible={link.visible}
-            />
-          ))}
-        </div>
-      )}
-    </>
   );
 }

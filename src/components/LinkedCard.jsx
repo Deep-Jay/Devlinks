@@ -2,14 +2,32 @@ import { useEffect, useState } from "react";
 import EditMode from "./EditMode";
 import { useToggle } from "../hooks/useToggle";
 import { useLinks } from "../hooks/useLinks";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
-function LinkedCard({ id, title, url, icon, visible, first, last, editPane }) {
+function LinkedCard({ id, title, url, icon, visible, editPane }) {
   const [editTitle, , activeTitle, inactiveTitle] = useToggle(false);
   const [draft, setDraft] = useState(title);
   const [editLink, , activeLink, inactiveLink] = useToggle(false);
   const [draftLink, setDraftLink] = useState(url);
-  const { handleDelete, handleToggle, moveUp, moveDown, handleUpdate } =
-    useLinks();
+  const { handleDelete, handleToggle, handleUpdate } = useLinks();
+
+  const {
+    attributes, // aria attributes for accessibility
+    listeners, // event listeners for drag trigger
+    setNodeRef, // ref to attach to the DOM element
+    transform, // current drag position
+    transition, // smooth animation
+    isDragging, // true while being dragged
+  } = useSortable({ id });
+
+  // CSS.Transform.toString converts transform object to CSS string
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1, // fade while dragging
+    cursor: isDragging ? "grabbing" : "grab",
+  };
 
   const handleSave = (field, value, inactivate) => {
     if (!value.trim()) return;
@@ -50,7 +68,12 @@ function LinkedCard({ id, title, url, icon, visible, first, last, editPane }) {
   }
 
   return (
-    <div className="link-card">
+    <div
+      className="link-card"
+      ref={setNodeRef} // attach ref — dnd-kit tracks this DOM node
+      style={style} // apply transform + transition
+      {...attributes}
+    >
       <div className="info">
         {visible ? (
           <a href={url} target="_blank" className="icon">
@@ -69,7 +92,7 @@ function LinkedCard({ id, title, url, icon, visible, first, last, editPane }) {
               handleCancel={handleCancel}
             />
           ) : (
-            <p onDoubleClick={activeTitle}>{title}</p>
+            <p onDoubleClick={editPane && activeTitle}>{title}</p>
           )}
         </div>
         {visible && (
@@ -83,7 +106,7 @@ function LinkedCard({ id, title, url, icon, visible, first, last, editPane }) {
                 handleCancel={handleCancelLink}
               />
             ) : (
-              <p onDoubleClick={activeLink}>{url}</p>
+              <p onDoubleClick={editPane && activeLink}>{url}</p>
             )}
           </div>
         )}
@@ -92,8 +115,9 @@ function LinkedCard({ id, title, url, icon, visible, first, last, editPane }) {
         <div className="actions">
           <button onClick={() => handleDelete(id)}>Delete</button>
           <button onClick={() => handleToggle(id)}>Toggle</button>
-          {!first && <button onClick={() => moveUp(id)}>⬆️</button>}
-          {!last && <button onClick={() => moveDown(id)}>⬇️</button>}
+          <button className="drag-handle" {...listeners}>
+            ⠿
+          </button>
         </div>
       )}
     </div>
