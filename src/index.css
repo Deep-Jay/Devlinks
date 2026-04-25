@@ -634,6 +634,9 @@ html[theme="light"] .sw-ico-sun {
     background-color: var(--bg-color);
     filter: invert();
 }
+.link-card {
+  touch-action: none; /* tells browser: don't handle touch, let dnd-kit */
+}
 
 @media screen and (min-width: 992px) {
     .preview-pane,
