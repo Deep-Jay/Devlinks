@@ -44,36 +44,6 @@ function linksReducer(state, action) {
       };
     }
 
-    // case "MOVE_UP": {
-    //   const index = state.links.findIndex((link) => link.id === action.payload);
-    //   if (index === 0) return state;
-
-    //   const updated = [...state.links]; // copy array
-    //   [updated[index - 1], updated[index]] = [
-    //     updated[index],
-    //     updated[index - 1],
-    //   ]; // swap
-    //   return {
-    //     ...state,
-    //     links: updated,
-    //   };
-    // }
-
-    // case "MOVE_DOWN": {
-    //   const index = state.links.findIndex((link) => link.id === action.payload);
-    //   if (index === state.links.length - 1) return state;
-
-    //   const updated = [...state.links];
-    //   [updated[index + 1], updated[index]] = [
-    //     updated[index],
-    //     updated[index + 1],
-    //   ];
-    //   return {
-    //     ...state,
-    //     links: updated,
-    //   };
-    // }
-
     case "UPDATE_LINK":
       return {
         ...state,
@@ -106,8 +76,6 @@ export function LinksProvider({ children }) {
     deleteLink: (id) => ({ type: "DELETE_LINK", payload: id }),
     toggleLink: (id) => ({ type: "TOGGLE_LINK", payload: id }),
     addLink: (link) => ({ type: "ADD_LINK", payload: link }),
-    // moveUp: (id) => ({ type: "MOVE_UP", payload: id }),
-    // moveDown: (id) => ({ type: "MOVE_DOWN", payload: id }),
     updateLink: (id, fields) => ({
       type: "UPDATE_LINK",
       payload: { id: id, fields: fields },
@@ -130,16 +98,6 @@ export function LinksProvider({ children }) {
   const checkDuplicateURL = (url) => {
     return state.links.find((link) => link.url === url);
   };
-
-  // // Move item up
-  // const moveUp = (id) => {
-  //   dispatch(actions.moveUp(id));
-  // };
-
-  // // Move item down in array
-  // const moveDown = (id) => {
-  //   dispatch(actions.moveDown(id));
-  // };
 
   const handleUpdate = (id, fields) => {
     dispatch(actions.updateLink(id, fields));

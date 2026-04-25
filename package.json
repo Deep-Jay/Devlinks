@@ -1,7 +1,9 @@
 {
   "name": "devlinks",
-  "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "A Linktree-style link-in-bio manager built with React",
+  "author": "Jaydeep",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",

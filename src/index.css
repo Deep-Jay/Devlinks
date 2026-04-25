@@ -652,3 +652,18 @@ html[theme="light"] .sw-ico-sun {
         grid-template-columns: 1fr;
     }
 }
+
+@media screen and (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+    .link-card {
+        gap: 10px;
+    }
+    .actions {
+        margin-left: 0px;
+        flex-wrap: wrap;
+        max-width: 40%;
+        justify-content: end;
+    }
+}

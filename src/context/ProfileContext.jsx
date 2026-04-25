@@ -4,7 +4,7 @@ import { useLocalStorage } from "../hooks/useLocalStorage";
 export const ProfileContext = createContext(null);
 const initialProfile = {
   name: "Jaydeep",
-  bio: "Blanditiis ratione quibusdam iusto sit nostrum eos commodi et. Est fugiat aut sint ut aut.",
+  bio: "Passionate developer crafting beautiful UIs with React | Building towards full-stack mastery with the MERN ecosystem. Code is my canvas.",
   avatar: "https://avatars.githubusercontent.com/u/83915597?v=4&size=64",
 };
 

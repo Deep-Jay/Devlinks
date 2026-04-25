@@ -1,16 +1,40 @@
-# React + Vite
+# DevLinks
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A Linktree-style link-in-bio manager built with React.
+Manage your links, customise your profile, and share a clean preview — all in one place.
 
-Currently, two official plugins are available:
+![DevLinks Preview](./screenshots/preview.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+- **Add, edit & delete links** — inline editing with double-click
+- **Drag to reorder** — smooth drag-and-drop with @dnd-kit
+- **Toggle visibility** — hide links without deleting them
+- **Profile customisation** — edit name, bio and avatar inline
+- **Live preview pane** — see exactly what visitors will see
+- **Dark / light theme** — persists across sessions
+- **Persistent storage** — all data saved to localStorage
+- **Skeleton loading** — polished loading state on first render
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech Stack
 
-## Expanding the ESLint configuration
+- React 18 — hooks, context, custom hooks
+- useReducer — predictable state management
+- @dnd-kit — accessible drag and drop
+- CSS custom properties — theme system
+- Vite — build tooling
+- Vercel — deployment
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## What I learned
+
+This was my first React project, built over 2 weeks while
+transitioning from WordPress/Shopify theme development.
+Key concepts practised: component architecture, lifting state,
+context API, useReducer, custom hooks, and drag-and-drop UX.
+
+## Run locally
+
+git clone https://github.com/yourusername/devlinks
+cd devlinks
+npm install
+npm run dev

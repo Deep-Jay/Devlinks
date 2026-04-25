@@ -18,6 +18,7 @@ const EditMode = ({
           onChange={setValue}
           onKeyDown={handleKeyDown}
           autoFocus
+          rows="4"
         ></textarea>
       ) : (
         <input
