@@ -13,6 +13,7 @@ import {
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -31,6 +32,12 @@ export default function App() {
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8, // must move 8px before drag activates
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,     // touch — hold for 250ms before drag starts
+        tolerance: 5,   // allow 5px finger movement during hold
       },
     }),
     useSensor(KeyboardSensor, {
