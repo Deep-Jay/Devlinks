@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { LinksContext } from "../context/LinksContext";
+import { LinksContext } from "../context/LinksContextInstance.jsx";
 
 export function useLinks() {
   const context = useContext(LinksContext);

@@ -1,6 +1,6 @@
-import { useEffect, createContext, useReducer } from "react";
+import { useEffect, useReducer } from "react";
 
-export const LinksContext = createContext(null);
+import { LinksContext } from "./LinksContextInstance.jsx";
 
 const initialState = {
   links: (() => {
